@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשימת הקניות המשפחתית</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* (אותו עיצוב בדיוק כמו קודם) */
+        :root { --primary-color: #4a90e2; --secondary-color: #50e3c2; --danger-color: #e74c3c; --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333; }
+        body { font-family: 'Heebo', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        header { background: linear-gradient(135deg, var(--primary-color), #357abd); color: white; width: 100%; padding: 20px 0; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 0 0 20px 20px; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.8rem; }
+        .container { width: 90%; max-width: 600px; }
+        .admin-panel { background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; width: fit-content; margin-right: auto; margin-left: auto; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; margin-right: 10px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .add-item-card { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid var(--secondary-color); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        select, input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; box-sizing: border-box; background: #fafafa; }
+        select:focus, input:focus { outline: none; border-color: var(--primary-color); background: white; }
+        button.add-btn { background: linear-gradient(90deg, var(--secondary-color), #34c7a9); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        button.add-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(80, 227, 194, 0.4); }
+        .category-header { font-size: 1.2rem; color: var(--primary-color); margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: flex; align-items: center; }
+        .category-header i { margin-left: 10px; }
+        .shopping-list { list-style: none; padding: 0; margin: 0; }
+        .list-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .item-info { display: flex; flex-direction: column; }
+        .item-name { font-size: 1.1rem; font-weight: 500; }
+        .item-sub { font-size: 0.8rem; color: #888; margin-top: 3px; }
+        .delete-btn { background-color: #fff0f0; color: var(--danger-color); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; display: none; }
+        .delete-btn:hover { background-color: var(--danger-color); color: white; }
+        body.admin-mode .delete-btn { display: block; }
+        body.admin-mode .list-item { border-right: 4px solid var(--danger-color); }
+        .empty-msg { text-align: center; color: #aaa; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><i class="fas fa-shopping-basket"></i> הקניות שלנו</h1>
+</header>
+
+<div class="container">
+    
+    <div class="admin-panel">
+        <span>מצב מנהל (הסרת מוצרים)</span>
+        <label class="switch">
+            <input type="checkbox" id="adminToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="add-item-card">
+        <div class="form-group">
+            <label>קטגוריה ראשית</label>
+            <select id="mainCategory" onchange="updateSubCategories()">
+                <option value="groceries">🛒 מוצרי מכולת</option>
+                <option value="home">🏠 לבית</option>
+                <option value="construction">🔨 מוצרי בניה ותחזוקה</option>
+                <option value="pickups">📦 איסוף משלוחים</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>תת קטגוריה</label>
+            <select id="subCategory"></select>
+        </div>
+        <div class="form-group">
+            <label>מה צריך לקנות?</label>
+            <input type="text" id="itemName" placeholder="לדוגמה: 2 קילו עגבניות">
+        </div>
+        <button class="add-btn" onclick="addItem()">הוסף לרשימה</button>
+    </div>
+
+    <div id="listContainer">
+        <div class="empty-msg">טוען נתונים...</div>
+    </div>
+</div>
+
+<script type="module">
+    // ייבוא פונקציות מ-Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // --- הגדרות ה-FIREBASE שלך ---
+    // העתק לכאן את הנתונים משלב 1.9 באתר של Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
+        authDomain: "family-shopping-891f7.firebaseapp.com",
+        databaseURL: "https://family-shopping-891f7-default-rtdb.firebaseio.com",
+        projectId: "family-shopping-891f7",
+        storageBucket: "family-shopping-891f7.firebasestorage.app",
+        messagingSenderId: "16936955736",
+        appId: "1:16936955736:web:dca42916750112b7787f2d",
+        measurementId: "G-QPL3C428RN"
+    };
+
+    // אתחול Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const shoppingListRef = ref(db, 'shoppingList');
+
+    // נתוני קטגוריות
+    const categoriesData = {
+        groceries: { label: "מוצרי מכולת", icon: "fa-carrot", subs: ["פירות וירקות", "מוצרי חלב וביצים", "אפיה", "בשר ודגים", "טואלטיקה וניקיון", "שימורים ומזווה"] },
+        home: { label: "לבית", icon: "fa-couch", subs: ["טקסטיל ומצעים", "כלי מטבח", "ריהוט ועיצוב", "גינה ומרפסת"] },
+        construction: { label: "מוצרי בניה ותחזוקה", icon: "fa-tools", subs: ["כלי עבודה", "חומרי בניין", "צבע", "חשמל ותאורה", "אינסטלציה"] },
+        pickups: { label: "איסוף משלוחים", icon: "fa-box-open", subs: ["דואר ישראל", "נקודת חלוקה", "חנות פרטית", "אחר"] }
+    };
+
+    // הפונקציות הגלובליות צריכות להיות מחוברות ל-window בגלל השימוש ב-module
+    window.updateSubCategories = function() {
+        const mainCat = document.getElementById('mainCategory').value;
+        const subCatSelect = document.getElementById('subCategory');
+        subCatSelect.innerHTML = "";
+        categoriesData[mainCat].subs.forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub;
+            option.textContent = sub;
+            subCatSelect.appendChild(option);
+        });
+    }
+
+    // הוספת פריט (שולח ל-Firebase)
+    window.addItem = function() {
+        const nameInput = document.getElementById('itemName');
+        const mainCat = document.getElementById('mainCategory').value;
+        const subCat = document.getElementById('subCategory').value;
+        const name = nameInput.value.trim();
+
+        if (name === "") { alert("אנא כתוב שם של מוצר"); return; }
+
+        push(shoppingListRef, {
+            category: mainCat,
+            subCategory: subCat,
+            name: name,
+            createdAt: Date.now()
+        });
+
+        nameInput.value = "";
+    }
+
+    // מחיקת פריט (מוחק מ-Firebase)
+    window.deleteItem = function(itemId) {
+        if(confirm("למחוק מהרשימה?")) {
+            const itemRef = ref(db, `shoppingList/${itemId}`);
+            remove(itemRef);
+        }
+    }
+
+    // האזנה לשינויים ב-Firebase בזמן אמת
+    onValue(shoppingListRef, (snapshot) => {
+        const data = snapshot.val();
+        const container = document.getElementById('listContainer');
+        container.innerHTML = "";
+
+        if (!data) {
+            container.innerHTML = '<div class="empty-msg"><i class="fas fa-check-circle"></i> הרשימה ריקה, איזה כיף!</div>';
+            return;
+        }
+
+        // המרת האובייקט של Firebase למערך
+        const itemsArray = Object.entries(data).map(([key, value]) => ({
+            id: key,
+            ...value
+        }));
+
+        // קיבוץ לפי קטגוריות
+        const grouped = {};
+        itemsArray.forEach(item => {
+            if (!grouped[item.category]) grouped[item.category] = [];
+            grouped[item.category].push(item);
+        });
+
+        for (const [catKey, items] of Object.entries(grouped)) {
+            const catData = categoriesData[catKey] || { label: "אחר", icon: "fa-question" };
+            
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `<i class="fas ${catData.icon}"></i> ${catData.label}`;
+            container.appendChild(header);
+
+            const ul = document.createElement('ul');
+            ul.className = 'shopping-list';
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                li.innerHTML = `
+                    <div class="item-info">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-sub">${item.subCategory}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('${item.id}')">
+                        <i class="fas fa-trash"></i> נרכש/הסר
+                    </button>
+                `;
+                ul.appendChild(li);
+            });
+            container.appendChild(ul);
+        }
+    });
+
+    // אתחול ראשוני
+    window.updateSubCategories();
+
+    // לוגיקת מתג מנהל (מקומי)
+    document.getElementById('adminToggle').addEventListener('change', function() {
+        if(this.checked) document.body.classList.add('admin-mode');
+        else document.body.classList.remove('admin-mode');
+    });
+</script>
+
+</body>
+</html>
