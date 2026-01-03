@@ -27,7 +27,6 @@
             min-height: 100vh;
         }
 
-        /* כותרת מעוצבת עם תמונה */
         header {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
@@ -57,7 +56,6 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        /* מכולה ראשית */
         .container {
             width: 90%;
             max-width: 600px;
@@ -66,7 +64,6 @@
             z-index: 2;
         }
 
-        /* סרגל כלים (כפתור מנהל) */
         .toolbar {
             display: flex;
             justify-content: flex-end;
@@ -77,12 +74,14 @@
             background: rgba(0,0,0,0.6);
             color: white;
             border: none;
-            padding: 5px 15px;
+            padding: 8px 20px; /* הגדלתי קצת את אזור הלחיצה לנייד */
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             cursor: pointer;
             backdrop-filter: blur(5px);
             transition: 0.3s;
+            /* חשוב למובייל: מונע זום בלחיצה כפולה ומשפר תגובה */
+            touch-action: manipulation; 
         }
         
         .admin-btn.active {
@@ -90,7 +89,6 @@
             box-shadow: 0 0 15px var(--secondary);
         }
 
-        /* פאנל ניהול */
         #adminPanel {
             background: var(--dark);
             color: white;
@@ -116,7 +114,6 @@
         #adminPanel button:hover { background: rgba(255,255,255,0.2); }
         .locked-badge { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; display: none; text-align: center; margin-bottom: 10px; font-weight: bold; }
 
-        /* כרטיס הוספה */
         .card {
             background: var(--glass);
             padding: 25px;
@@ -165,7 +162,6 @@
         button.main-btn:active { transform: scale(0.98); }
         button.main-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
-        /* הרשימה */
         .category-title {
             display: flex;
             align-items: center;
@@ -207,7 +203,6 @@
         }
         .delete-btn:hover { background: var(--primary-dark); color: white; }
 
-        /* מודאלים (חלונות קופצים) */
         .modal {
             display: none; 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -232,7 +227,7 @@
 <div class="container">
     
     <div class="toolbar">
-        <button id="adminLoginBtn" class="admin-btn"><i class="fas fa-user-shield"></i> כניסת מנהל</button>
+        <button id="adminLoginBtn" class="admin-btn" onclick="openAdminLogin()"><i class="fas fa-user-shield"></i> כניסת מנהל</button>
     </div>
 
     <div id="adminPanel">
@@ -294,7 +289,7 @@
     import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     // --- הגדרות ה-FIREBASE שלך ---
-    // הדבק כאן את הקוד שלך מ-Firebase
+    // וודא שהפרטים כאן נכונים
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -309,7 +304,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // ניהול משתמש מקומי (מזהה ייחודי למכשיר)
     let userId = localStorage.getItem('shopping_user_id');
     if (!userId) {
         userId = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -320,26 +314,21 @@
     let appSettings = {};
     let currentCategories = {};
 
-    // ברירת מחדל לקטגוריות (אם אין בשרת)
     const defaultCategories = {
         groceries: { label: "מכולת ומזון", icon: "fa-carrot", subs: ["ירקות", "חלב", "לחם", "בשר"] },
         home: { label: "בית וניקיון", icon: "fa-broom", subs: ["חומרי ניקוי", "נייר", "חד פעמי"] },
         pharma: { label: "פארם", icon: "fa-first-aid", subs: ["תרופות", "הגיינה"] }
     };
 
-    // --- פונקציות ליבה ---
-
-    // טעינת הגדרות ראשונית
     const settingsRef = ref(db, 'settings');
     onValue(settingsRef, (snapshot) => {
         const data = snapshot.val();
         
-        // אתחול הגדרות אם לא קיימות
         if (!data) {
             set(settingsRef, {
                 categories: defaultCategories,
                 isLocked: false,
-                adminPass: "1234" // סיסמת ברירת מחדל
+                adminPass: "1234"
             });
             return;
         }
@@ -347,7 +336,6 @@
         appSettings = data;
         currentCategories = data.categories || defaultCategories;
         
-        // עדכון UI
         renderCategorySelects();
         handleLockState(data.isLocked);
     });
@@ -365,7 +353,6 @@
             mainSelect.appendChild(option);
         });
         
-        // שחזור בחירה אם אפשר
         if(currentVal && currentCategories[currentVal]) mainSelect.value = currentVal;
         
         window.updateSubCategories();
@@ -404,8 +391,6 @@
         }
     }
 
-    // --- ניהול רשימה ---
-    
     window.addItem = function() {
         if (appSettings.isLocked && !isAdmin) return;
 
@@ -419,14 +404,13 @@
             name: nameInput.value,
             category: mainCat,
             subCategory: subCat,
-            ownerId: userId, // מי יצר את הפריט
+            ownerId: userId,
             createdAt: Date.now()
         });
         nameInput.value = "";
     }
 
     window.deleteItem = function(itemId, itemOwnerId) {
-        // מחיקה מותרת אם: אני מנהל או אני יצרתי את הפריט
         if (isAdmin || itemOwnerId === userId) {
             if(confirm("למחוק את הפריט?")) {
                 remove(ref(db, `shoppingList/${itemId}`));
@@ -436,7 +420,6 @@
         }
     }
 
-    // האזנה לרשימה
     onValue(ref(db, 'shoppingList'), (snapshot) => {
         const listDiv = document.getElementById('listContainer');
         listDiv.innerHTML = "";
@@ -449,25 +432,21 @@
 
         const items = Object.entries(data).map(([k, v]) => ({id: k, ...v}));
         
-        // קיבוץ לפי קטגוריות
         const grouped = {};
         items.forEach(item => {
             if (!grouped[item.category]) grouped[item.category] = [];
             grouped[item.category].push(item);
         });
 
-        // יצירת ה-HTML
         Object.keys(currentCategories).forEach(catKey => {
             if (grouped[catKey]) {
                 const catData = currentCategories[catKey];
                 
-                // כותרת קטגוריה
                 const title = document.createElement('div');
                 title.className = 'category-title';
                 title.innerHTML = `<i class="fas ${catData.icon}"></i> ${catData.label}`;
                 listDiv.appendChild(title);
 
-                // פריטים
                 grouped[catKey].forEach(item => {
                     const isMyItem = item.ownerId === userId;
                     const canDelete = isAdmin || isMyItem;
@@ -488,33 +467,28 @@
                 });
             }
         });
-        
-        // טיפול בקטגוריות שנמחקו אך יש בהן פריטים (Other)
-        // (קוד פשוט כרגע לא מטפל בזה כדי לחסוך מקום, המנהל יראה הכל)
     });
 
-    // --- לוגיקת מנהל ---
-
-    document.getElementById('adminLoginBtn').onclick = () => {
+    // --- לוגיקת מנהל מתוקנת למובייל ---
+    
+    // פונקציה חדשה שנקראת ישירות מה-HTML
+    window.openAdminLogin = function() {
         if (!isAdmin) {
             document.getElementById('passwordModal').style.display = 'flex';
         }
-    };
+    }
 
     window.checkAdminPassword = function() {
         const input = document.getElementById('adminPasswordInput').value;
-        // בדיקת סיסמה מול בסיס הנתונים
         if (input === appSettings.adminPass) {
             isAdmin = true;
             document.getElementById('passwordModal').style.display = 'none';
             document.getElementById('adminLoginBtn').classList.add('active');
             document.getElementById('adminLoginBtn').innerHTML = '<i class="fas fa-user-check"></i> מחובר כמנהל';
             document.getElementById('adminPanel').style.display = 'block';
-            handleLockState(appSettings.isLocked); // רענון מצב
-            // רענון הרשימה כדי להציג כפתורי מחיקה לכולם
-            // (טריק: קריאה מחדש ל-onValue תתרחש בשינוי הבא, או נחכה לרענון דף. כאן נסמוך על המשתמש שירענן או שנוסיף לוגיקה מורכבת יותר. פשוט נרענן דף זה הכי בטוח)
+            handleLockState(appSettings.isLocked);
              alert("נכנסת בהצלחה כמנהל! כעת תוכל לערוך ולמחוק הכל.");
-             renderCategorySelects(); // מרענן רק את ה-UI של ההוספה
+             renderCategorySelects();
         } else {
             alert("סיסמה שגויה");
         }
@@ -540,7 +514,6 @@
         }
     }
 
-    // --- עורך ההגדרות (JSON) ---
     window.openSettingsEditor = function() {
         document.getElementById('settingsJson').value = JSON.stringify(currentCategories, null, 2);
         document.getElementById('settingsModal').style.display = 'flex';
@@ -558,12 +531,10 @@
 
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
     
-    // סגירת מודאל בלחיצה בחוץ
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) event.target.style.display = "none";
     }
 
-    // אתחול אירועים ל-select
     document.getElementById('mainCategory').addEventListener('change', window.updateSubCategories);
 
 </script>
