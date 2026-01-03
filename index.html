@@ -74,14 +74,13 @@
             background: rgba(0,0,0,0.6);
             color: white;
             border: none;
-            padding: 8px 20px; /* הגדלתי קצת את אזור הלחיצה לנייד */
+            padding: 8px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
             cursor: pointer;
             backdrop-filter: blur(5px);
             transition: 0.3s;
-            /* חשוב למובייל: מונע זום בלחיצה כפולה ומשפר תגובה */
-            touch-action: manipulation; 
+            touch-action: manipulation;
         }
         
         .admin-btn.active {
@@ -165,12 +164,28 @@
         .category-title {
             display: flex;
             align-items: center;
+            justify-content: space-between; /* כדי שהכפתור יהיה בצד שמאל */
             color: var(--primary);
             font-size: 1.3rem;
             margin: 30px 0 15px;
             font-weight: 800;
         }
-        .category-title i { margin-left: 10px; background: #fff0f0; padding: 10px; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; }
+        
+        .cat-label { display: flex; align-items: center; }
+        .cat-label i { margin-left: 10px; background: #fff0f0; padding: 10px; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; }
+
+        /* כפתור מחיקת קטגוריה */
+        .delete-cat-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0.9;
+        }
+        .delete-cat-btn:hover { opacity: 1; transform: scale(1.05); }
 
         .list-item {
             background: white;
@@ -285,11 +300,11 @@
 </div>
 
 <script type="module">
+    // הוספתי כאן את 'update' לרשימת היבוא
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     // --- הגדרות ה-FIREBASE שלך ---
-    // וודא שהפרטים כאן נכונים
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -313,6 +328,7 @@
     let isAdmin = false;
     let appSettings = {};
     let currentCategories = {};
+    let latestListData = null; // משתנה לשמירת המידע העדכני של הרשימה
 
     const defaultCategories = {
         groceries: { label: "מכולת ומזון", icon: "fa-carrot", subs: ["ירקות", "חלב", "לחם", "בשר"] },
@@ -323,7 +339,6 @@
     const settingsRef = ref(db, 'settings');
     onValue(settingsRef, (snapshot) => {
         const data = snapshot.val();
-        
         if (!data) {
             set(settingsRef, {
                 categories: defaultCategories,
@@ -332,12 +347,13 @@
             });
             return;
         }
-
         appSettings = data;
         currentCategories = data.categories || defaultCategories;
         
         renderCategorySelects();
         handleLockState(data.isLocked);
+        // אם משנים קטגוריות בזמן שהרשימה מוצגת, נרצה לרענן גם אותה
+        renderShoppingList(latestListData); 
     });
 
     function renderCategorySelects() {
@@ -354,7 +370,6 @@
         });
         
         if(currentVal && currentCategories[currentVal]) mainSelect.value = currentVal;
-        
         window.updateSubCategories();
     }
 
@@ -362,7 +377,6 @@
         const mainKey = document.getElementById('mainCategory').value;
         const subSelect = document.getElementById('subCategory');
         subSelect.innerHTML = "";
-        
         if (currentCategories[mainKey] && currentCategories[mainKey].subs) {
             currentCategories[mainKey].subs.forEach(sub => {
                 const opt = document.createElement('option');
@@ -393,7 +407,6 @@
 
     window.addItem = function() {
         if (appSettings.isLocked && !isAdmin) return;
-
         const nameInput = document.getElementById('itemName');
         const mainCat = document.getElementById('mainCategory').value;
         const subCat = document.getElementById('subCategory').value;
@@ -420,10 +433,39 @@
         }
     }
 
+    // פונקציה חדשה: מחיקת קטגוריה שלמה
+    window.deleteCategory = function(catKey) {
+        if(!latestListData) return;
+        if(!confirm("זהירות: פעולה זו תמחק את כל המוצרים בקטגוריה זו. להמשיך?")) return;
+
+        const updates = {};
+        let count = 0;
+        
+        // עובר על כל הרשימה ומחפש פריטים מהקטגוריה שנבחרה
+        Object.entries(latestListData).forEach(([id, item]) => {
+            if (item.category === catKey) {
+                updates[id] = null; // null ב-Firebase אומר מחיקה
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            update(ref(db, 'shoppingList'), updates);
+        } else {
+            alert("אין מוצרים למחיקה בקטגוריה זו");
+        }
+    }
+
+    // האזנה לשינויים ב-Firebase
     onValue(ref(db, 'shoppingList'), (snapshot) => {
+        latestListData = snapshot.val(); // שמירת המידע הגולמי
+        renderShoppingList(latestListData);
+    });
+
+    // פונקציית הרינדור הופרדה כדי שנוכל לקרוא לה גם כשנכנסים כמנהל
+    function renderShoppingList(data) {
         const listDiv = document.getElementById('listContainer');
         listDiv.innerHTML = "";
-        const data = snapshot.val();
 
         if (!data) {
             listDiv.innerHTML = '<div style="text-align:center; margin-top:50px;"><i class="fas fa-check-circle fa-3x" style="color:#ddd;"></i><br><br>הכל נקנה! הרשימה ריקה.</div>';
@@ -431,7 +473,6 @@
         }
 
         const items = Object.entries(data).map(([k, v]) => ({id: k, ...v}));
-        
         const grouped = {};
         items.forEach(item => {
             if (!grouped[item.category]) grouped[item.category] = [];
@@ -442,9 +483,19 @@
             if (grouped[catKey]) {
                 const catData = currentCategories[catKey];
                 
+                // כותרת עם כפתור מחיקה למנהל
                 const title = document.createElement('div');
                 title.className = 'category-title';
-                title.innerHTML = `<i class="fas ${catData.icon}"></i> ${catData.label}`;
+                
+                let deleteCatBtn = '';
+                if (isAdmin) {
+                    deleteCatBtn = `<button class="delete-cat-btn" onclick="deleteCategory('${catKey}')"><i class="fas fa-trash-alt"></i> נקה הכל</button>`;
+                }
+
+                title.innerHTML = `
+                    <div class="cat-label"><i class="fas ${catData.icon}"></i> ${catData.label}</div>
+                    ${deleteCatBtn}
+                `;
                 listDiv.appendChild(title);
 
                 grouped[catKey].forEach(item => {
@@ -467,11 +518,10 @@
                 });
             }
         });
-    });
+    }
 
-    // --- לוגיקת מנהל מתוקנת למובייל ---
+    // --- לוגיקת מנהל ---
     
-    // פונקציה חדשה שנקראת ישירות מה-HTML
     window.openAdminLogin = function() {
         if (!isAdmin) {
             document.getElementById('passwordModal').style.display = 'flex';
@@ -487,8 +537,9 @@
             document.getElementById('adminLoginBtn').innerHTML = '<i class="fas fa-user-check"></i> מחובר כמנהל';
             document.getElementById('adminPanel').style.display = 'block';
             handleLockState(appSettings.isLocked);
-             alert("נכנסת בהצלחה כמנהל! כעת תוכל לערוך ולמחוק הכל.");
-             renderCategorySelects();
+            alert("נכנסת בהצלחה כמנהל!");
+            renderCategorySelects();
+            renderShoppingList(latestListData); // רענון הרשימה להוספת כפתורי מחיקה
         } else {
             alert("סיסמה שגויה");
         }
@@ -500,6 +551,7 @@
         document.getElementById('adminLoginBtn').classList.remove('active');
         document.getElementById('adminLoginBtn').innerHTML = '<i class="fas fa-user-shield"></i> כניסת מנהל';
         handleLockState(appSettings.isLocked);
+        renderShoppingList(latestListData); // רענון הרשימה להסרת כפתורי מחיקה
     }
 
     window.toggleLock = function() {
@@ -530,7 +582,6 @@
     }
 
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-    
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) event.target.style.display = "none";
     }
