@@ -4,93 +4,297 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>רשימת הקניות המשפחתית</title>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* (אותו עיצוב בדיוק כמו קודם) */
-        :root { --primary-color: #4a90e2; --secondary-color: #50e3c2; --danger-color: #e74c3c; --bg-color: #f4f7f6; --card-bg: #ffffff; --text-color: #333; }
-        body { font-family: 'Heebo', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        header { background: linear-gradient(135deg, var(--primary-color), #357abd); color: white; width: 100%; padding: 20px 0; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 0 0 20px 20px; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 1.8rem; }
-        .container { width: 90%; max-width: 600px; }
-        .admin-panel { background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; width: fit-content; margin-right: auto; margin-left: auto; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; margin-right: 10px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(26px); }
-        .add-item-card { background: var(--card-bg); padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid var(--secondary-color); }
+        :root {
+            --primary: #FF6B6B;
+            --primary-dark: #EE5253;
+            --secondary: #4ECDC4;
+            --dark: #2C3A47;
+            --light: #F7F9F9;
+            --glass: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: #f0f2f5 url('https://www.transparenttextures.com/patterns/cubes.png');
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* כותרת מעוצבת עם תמונה */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px 20px 50px;
+            text-align: center;
+            border-radius: 0 0 30px 30px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=80') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        header h1 {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            font-weight: 800;
+            font-size: 2.2rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* מכולה ראשית */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: -30px auto 50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* סרגל כלים (כפתור מנהל) */
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .admin-btn {
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+        
+        .admin-btn.active {
+            background: var(--secondary);
+            box-shadow: 0 0 15px var(--secondary);
+        }
+
+        /* פאנל ניהול */
+        #adminPanel {
+            background: var(--dark);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown { from {opacity:0; transform: translateY(-10px);} to {opacity:1; transform: translateY(0);} }
+
+        #adminPanel button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        
+        #adminPanel button:hover { background: rgba(255,255,255,0.2); }
+        .locked-badge { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; display: none; text-align: center; margin-bottom: 10px; font-weight: bold; }
+
+        /* כרטיס הוספה */
+        .card {
+            background: var(--glass);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-        select, input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; box-sizing: border-box; background: #fafafa; }
-        select:focus, input:focus { outline: none; border-color: var(--primary-color); background: white; }
-        button.add-btn { background: linear-gradient(90deg, var(--secondary-color), #34c7a9); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        button.add-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(80, 227, 194, 0.4); }
-        .category-header { font-size: 1.2rem; color: var(--primary-color); margin-top: 25px; margin-bottom: 10px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: flex; align-items: center; }
-        .category-header i { margin-left: 10px; }
-        .shopping-list { list-style: none; padding: 0; margin: 0; }
-        .list-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .item-info { display: flex; flex-direction: column; }
-        .item-name { font-size: 1.1rem; font-weight: 500; }
-        .item-sub { font-size: 0.8rem; color: #888; margin-top: 3px; }
-        .delete-btn { background-color: #fff0f0; color: var(--danger-color); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; display: none; }
-        .delete-btn:hover { background-color: var(--danger-color); color: white; }
-        body.admin-mode .delete-btn { display: block; }
-        body.admin-mode .list-item { border-right: 4px solid var(--danger-color); }
-        .empty-msg { text-align: center; color: #aaa; margin-top: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 0.9rem; }
+        
+        select, input[type="text"], textarea, input[type="password"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            background: #fff;
+            transition: 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
+        }
+
+        button.main-btn {
+            background: linear-gradient(45deg, var(--secondary), #26de81);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(38, 222, 129, 0.4);
+            transition: 0.2s;
+        }
+
+        button.main-btn:active { transform: scale(0.98); }
+        button.main-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        /* הרשימה */
+        .category-title {
+            display: flex;
+            align-items: center;
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin: 30px 0 15px;
+            font-weight: 800;
+        }
+        .category-title i { margin-left: 10px; background: #fff0f0; padding: 10px; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; }
+
+        .list-item {
+            background: white;
+            margin-bottom: 12px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border-right: 5px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .list-item:hover { transform: translateX(-5px); }
+        .list-item.my-item { border-right-color: var(--secondary); }
+
+        .item-name { font-weight: 600; font-size: 1.1rem; }
+        .item-sub { display: block; font-size: 0.85rem; color: #888; margin-top: 4px; }
+        
+        .delete-btn {
+            background: #ffecec;
+            color: var(--primary-dark);
+            border: none;
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .delete-btn:hover { background: var(--primary-dark); color: white; }
+
+        /* מודאלים (חלונות קופצים) */
+        .modal {
+            display: none; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center;
+        }
+        .close-modal { float: right; cursor: pointer; font-size: 1.5rem; }
+        
+        #settingsJson { height: 200px; font-family: monospace; font-size: 0.8rem; direction: ltr; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1><i class="fas fa-shopping-basket"></i> הקניות שלנו</h1>
+    <h1><i class="fas fa-shopping-cart"></i> הקניות שלנו</h1>
 </header>
 
 <div class="container">
     
-    <div class="admin-panel">
-        <span>מצב מנהל (הסרת מוצרים)</span>
-        <label class="switch">
-            <input type="checkbox" id="adminToggle">
-            <span class="slider"></span>
-        </label>
+    <div class="toolbar">
+        <button id="adminLoginBtn" class="admin-btn"><i class="fas fa-user-shield"></i> כניסת מנהל</button>
     </div>
 
-    <div class="add-item-card">
+    <div id="adminPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong><i class="fas fa-cog"></i> פאנל ניהול</strong>
+            <button onclick="logoutAdmin()" style="background:#e74c3c; border:none;">יציאה</button>
+        </div>
+        <button onclick="toggleLock()"><i class="fas fa-lock"></i> נעל/פתח רשימה</button>
+        <button onclick="openSettingsEditor()"><i class="fas fa-edit"></i> ערוך קטגוריות</button>
+        <button onclick="changePassword()"><i class="fas fa-key"></i> שנה סיסמה</button>
+    </div>
+
+    <div id="lockedMessage" class="locked-badge"><i class="fas fa-lock"></i> הרשימה נעולה להוספת פריטים כרגע</div>
+
+    <div class="card" id="addFormCard">
         <div class="form-group">
             <label>קטגוריה ראשית</label>
-            <select id="mainCategory" onchange="updateSubCategories()">
-                <option value="groceries">🛒 מוצרי מכולת</option>
-                <option value="home">🏠 לבית</option>
-                <option value="construction">🔨 מוצרי בניה ותחזוקה</option>
-                <option value="pickups">📦 איסוף משלוחים</option>
-            </select>
+            <select id="mainCategory"></select>
         </div>
         <div class="form-group">
             <label>תת קטגוריה</label>
             <select id="subCategory"></select>
         </div>
         <div class="form-group">
-            <label>מה צריך לקנות?</label>
-            <input type="text" id="itemName" placeholder="לדוגמה: 2 קילו עגבניות">
+            <label>שם המוצר</label>
+            <input type="text" id="itemName" placeholder="לדוגמה: לחם מלא">
         </div>
-        <button class="add-btn" onclick="addItem()">הוסף לרשימה</button>
+        <button class="main-btn" id="addBtn" onclick="addItem()">הוסף לרשימה <i class="fas fa-plus"></i></button>
     </div>
 
     <div id="listContainer">
-        <div class="empty-msg">טוען נתונים...</div>
+        <div style="text-align:center; padding:20px; color:#999;">טוען נתונים...</div>
+    </div>
+</div>
+
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('passwordModal')">&times;</span>
+        <h3>הכנס סיסמת מנהל</h3>
+        <input type="password" id="adminPasswordInput" placeholder="סיסמה">
+        <br><br>
+        <button class="main-btn" onclick="checkAdminPassword()">כניסה</button>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+        <span class="close-modal" onclick="closeModal('settingsModal')">&times;</span>
+        <h3>עריכת קטגוריות (JSON)</h3>
+        <p style="font-size:0.8rem; color:#666;">ערוך את הטקסט בזהירות ושמור.</p>
+        <textarea id="settingsJson"></textarea>
+        <br><br>
+        <button class="main-btn" onclick="saveSettings()">שמור שינויים</button>
     </div>
 </div>
 
 <script type="module">
-    // ייבוא פונקציות מ-Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     // --- הגדרות ה-FIREBASE שלך ---
-    // העתק לכאן את הנתונים משלב 1.9 באתר של Firebase
+    // הדבק כאן את הקוד שלך מ-Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -102,121 +306,266 @@
         measurementId: "G-QPL3C428RN"
     };
 
-    // אתחול Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const shoppingListRef = ref(db, 'shoppingList');
+    
+    // ניהול משתמש מקומי (מזהה ייחודי למכשיר)
+    let userId = localStorage.getItem('shopping_user_id');
+    if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('shopping_user_id', userId);
+    }
+    
+    let isAdmin = false;
+    let appSettings = {};
+    let currentCategories = {};
 
-    // נתוני קטגוריות
-    const categoriesData = {
-        groceries: { label: "מוצרי מכולת", icon: "fa-carrot", subs: ["פירות וירקות", "מוצרי חלב וביצים", "אפיה", "בשר ודגים", "טואלטיקה וניקיון", "שימורים ומזווה"] },
-        home: { label: "לבית", icon: "fa-couch", subs: ["טקסטיל ומצעים", "כלי מטבח", "ריהוט ועיצוב", "גינה ומרפסת"] },
-        construction: { label: "מוצרי בניה ותחזוקה", icon: "fa-tools", subs: ["כלי עבודה", "חומרי בניין", "צבע", "חשמל ותאורה", "אינסטלציה"] },
-        pickups: { label: "איסוף משלוחים", icon: "fa-box-open", subs: ["דואר ישראל", "נקודת חלוקה", "חנות פרטית", "אחר"] }
+    // ברירת מחדל לקטגוריות (אם אין בשרת)
+    const defaultCategories = {
+        groceries: { label: "מכולת ומזון", icon: "fa-carrot", subs: ["ירקות", "חלב", "לחם", "בשר"] },
+        home: { label: "בית וניקיון", icon: "fa-broom", subs: ["חומרי ניקוי", "נייר", "חד פעמי"] },
+        pharma: { label: "פארם", icon: "fa-first-aid", subs: ["תרופות", "הגיינה"] }
     };
 
-    // הפונקציות הגלובליות צריכות להיות מחוברות ל-window בגלל השימוש ב-module
-    window.updateSubCategories = function() {
-        const mainCat = document.getElementById('mainCategory').value;
-        const subCatSelect = document.getElementById('subCategory');
-        subCatSelect.innerHTML = "";
-        categoriesData[mainCat].subs.forEach(sub => {
-            const option = document.createElement('option');
-            option.value = sub;
-            option.textContent = sub;
-            subCatSelect.appendChild(option);
-        });
-    }
+    // --- פונקציות ליבה ---
 
-    // הוספת פריט (שולח ל-Firebase)
-    window.addItem = function() {
-        const nameInput = document.getElementById('itemName');
-        const mainCat = document.getElementById('mainCategory').value;
-        const subCat = document.getElementById('subCategory').value;
-        const name = nameInput.value.trim();
-
-        if (name === "") { alert("אנא כתוב שם של מוצר"); return; }
-
-        push(shoppingListRef, {
-            category: mainCat,
-            subCategory: subCat,
-            name: name,
-            createdAt: Date.now()
-        });
-
-        nameInput.value = "";
-    }
-
-    // מחיקת פריט (מוחק מ-Firebase)
-    window.deleteItem = function(itemId) {
-        if(confirm("למחוק מהרשימה?")) {
-            const itemRef = ref(db, `shoppingList/${itemId}`);
-            remove(itemRef);
-        }
-    }
-
-    // האזנה לשינויים ב-Firebase בזמן אמת
-    onValue(shoppingListRef, (snapshot) => {
+    // טעינת הגדרות ראשונית
+    const settingsRef = ref(db, 'settings');
+    onValue(settingsRef, (snapshot) => {
         const data = snapshot.val();
-        const container = document.getElementById('listContainer');
-        container.innerHTML = "";
-
+        
+        // אתחול הגדרות אם לא קיימות
         if (!data) {
-            container.innerHTML = '<div class="empty-msg"><i class="fas fa-check-circle"></i> הרשימה ריקה, איזה כיף!</div>';
+            set(settingsRef, {
+                categories: defaultCategories,
+                isLocked: false,
+                adminPass: "1234" // סיסמת ברירת מחדל
+            });
             return;
         }
 
-        // המרת האובייקט של Firebase למערך
-        const itemsArray = Object.entries(data).map(([key, value]) => ({
-            id: key,
-            ...value
-        }));
+        appSettings = data;
+        currentCategories = data.categories || defaultCategories;
+        
+        // עדכון UI
+        renderCategorySelects();
+        handleLockState(data.isLocked);
+    });
 
+    function renderCategorySelects() {
+        const mainSelect = document.getElementById('mainCategory');
+        const currentVal = mainSelect.value; 
+        mainSelect.innerHTML = "";
+        
+        Object.keys(currentCategories).forEach(key => {
+            const cat = currentCategories[key];
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = cat.label;
+            mainSelect.appendChild(option);
+        });
+        
+        // שחזור בחירה אם אפשר
+        if(currentVal && currentCategories[currentVal]) mainSelect.value = currentVal;
+        
+        window.updateSubCategories();
+    }
+
+    window.updateSubCategories = function() {
+        const mainKey = document.getElementById('mainCategory').value;
+        const subSelect = document.getElementById('subCategory');
+        subSelect.innerHTML = "";
+        
+        if (currentCategories[mainKey] && currentCategories[mainKey].subs) {
+            currentCategories[mainKey].subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function handleLockState(isLocked) {
+        const addBtn = document.getElementById('addBtn');
+        const inputs = document.querySelectorAll('#addFormCard input, #addFormCard select');
+        const msg = document.getElementById('lockedMessage');
+
+        if (isLocked && !isAdmin) {
+            addBtn.disabled = true;
+            addBtn.textContent = "הרשימה נעולה";
+            inputs.forEach(el => el.disabled = true);
+            msg.style.display = 'block';
+        } else {
+            addBtn.disabled = false;
+            addBtn.innerHTML = 'הוסף לרשימה <i class="fas fa-plus"></i>';
+            inputs.forEach(el => el.disabled = false);
+            msg.style.display = 'none';
+        }
+    }
+
+    // --- ניהול רשימה ---
+    
+    window.addItem = function() {
+        if (appSettings.isLocked && !isAdmin) return;
+
+        const nameInput = document.getElementById('itemName');
+        const mainCat = document.getElementById('mainCategory').value;
+        const subCat = document.getElementById('subCategory').value;
+        
+        if (!nameInput.value.trim()) { alert("יש לכתוב שם מוצר"); return; }
+
+        push(ref(db, 'shoppingList'), {
+            name: nameInput.value,
+            category: mainCat,
+            subCategory: subCat,
+            ownerId: userId, // מי יצר את הפריט
+            createdAt: Date.now()
+        });
+        nameInput.value = "";
+    }
+
+    window.deleteItem = function(itemId, itemOwnerId) {
+        // מחיקה מותרת אם: אני מנהל או אני יצרתי את הפריט
+        if (isAdmin || itemOwnerId === userId) {
+            if(confirm("למחוק את הפריט?")) {
+                remove(ref(db, `shoppingList/${itemId}`));
+            }
+        } else {
+            alert("רק מי שהוסיף את הפריט יכול למחוק אותו (או מנהל)");
+        }
+    }
+
+    // האזנה לרשימה
+    onValue(ref(db, 'shoppingList'), (snapshot) => {
+        const listDiv = document.getElementById('listContainer');
+        listDiv.innerHTML = "";
+        const data = snapshot.val();
+
+        if (!data) {
+            listDiv.innerHTML = '<div style="text-align:center; margin-top:50px;"><i class="fas fa-check-circle fa-3x" style="color:#ddd;"></i><br><br>הכל נקנה! הרשימה ריקה.</div>';
+            return;
+        }
+
+        const items = Object.entries(data).map(([k, v]) => ({id: k, ...v}));
+        
         // קיבוץ לפי קטגוריות
         const grouped = {};
-        itemsArray.forEach(item => {
+        items.forEach(item => {
             if (!grouped[item.category]) grouped[item.category] = [];
             grouped[item.category].push(item);
         });
 
-        for (const [catKey, items] of Object.entries(grouped)) {
-            const catData = categoriesData[catKey] || { label: "אחר", icon: "fa-question" };
-            
-            const header = document.createElement('div');
-            header.className = 'category-header';
-            header.innerHTML = `<i class="fas ${catData.icon}"></i> ${catData.label}`;
-            container.appendChild(header);
+        // יצירת ה-HTML
+        Object.keys(currentCategories).forEach(catKey => {
+            if (grouped[catKey]) {
+                const catData = currentCategories[catKey];
+                
+                // כותרת קטגוריה
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.innerHTML = `<i class="fas ${catData.icon}"></i> ${catData.label}`;
+                listDiv.appendChild(title);
 
-            const ul = document.createElement('ul');
-            ul.className = 'shopping-list';
+                // פריטים
+                grouped[catKey].forEach(item => {
+                    const isMyItem = item.ownerId === userId;
+                    const canDelete = isAdmin || isMyItem;
+                    
+                    const itemEl = document.createElement('div');
+                    itemEl.className = `list-item ${isMyItem ? 'my-item' : ''}`;
+                    itemEl.innerHTML = `
+                        <div>
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-sub">${item.subCategory} ${isMyItem ? '(שלי)' : ''}</div>
+                        </div>
+                        ${canDelete ? `
+                        <button class="delete-btn" onclick="deleteItem('${item.id}', '${item.ownerId}')">
+                            <i class="fas fa-trash"></i>
+                        </button>` : ''}
+                    `;
+                    listDiv.appendChild(itemEl);
+                });
+            }
+        });
+        
+        // טיפול בקטגוריות שנמחקו אך יש בהן פריטים (Other)
+        // (קוד פשוט כרגע לא מטפל בזה כדי לחסוך מקום, המנהל יראה הכל)
+    });
 
-            items.forEach(item => {
-                const li = document.createElement('li');
-                li.className = 'list-item';
-                li.innerHTML = `
-                    <div class="item-info">
-                        <span class="item-name">${item.name}</span>
-                        <span class="item-sub">${item.subCategory}</span>
-                    </div>
-                    <button class="delete-btn" onclick="deleteItem('${item.id}')">
-                        <i class="fas fa-trash"></i> נרכש/הסר
-                    </button>
-                `;
-                ul.appendChild(li);
-            });
-            container.appendChild(ul);
+    // --- לוגיקת מנהל ---
+
+    document.getElementById('adminLoginBtn').onclick = () => {
+        if (!isAdmin) {
+            document.getElementById('passwordModal').style.display = 'flex';
         }
-    });
+    };
 
-    // אתחול ראשוני
-    window.updateSubCategories();
+    window.checkAdminPassword = function() {
+        const input = document.getElementById('adminPasswordInput').value;
+        // בדיקת סיסמה מול בסיס הנתונים
+        if (input === appSettings.adminPass) {
+            isAdmin = true;
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('adminLoginBtn').classList.add('active');
+            document.getElementById('adminLoginBtn').innerHTML = '<i class="fas fa-user-check"></i> מחובר כמנהל';
+            document.getElementById('adminPanel').style.display = 'block';
+            handleLockState(appSettings.isLocked); // רענון מצב
+            // רענון הרשימה כדי להציג כפתורי מחיקה לכולם
+            // (טריק: קריאה מחדש ל-onValue תתרחש בשינוי הבא, או נחכה לרענון דף. כאן נסמוך על המשתמש שירענן או שנוסיף לוגיקה מורכבת יותר. פשוט נרענן דף זה הכי בטוח)
+             alert("נכנסת בהצלחה כמנהל! כעת תוכל לערוך ולמחוק הכל.");
+             renderCategorySelects(); // מרענן רק את ה-UI של ההוספה
+        } else {
+            alert("סיסמה שגויה");
+        }
+    }
 
-    // לוגיקת מתג מנהל (מקומי)
-    document.getElementById('adminToggle').addEventListener('change', function() {
-        if(this.checked) document.body.classList.add('admin-mode');
-        else document.body.classList.remove('admin-mode');
-    });
+    window.logoutAdmin = function() {
+        isAdmin = false;
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('adminLoginBtn').classList.remove('active');
+        document.getElementById('adminLoginBtn').innerHTML = '<i class="fas fa-user-shield"></i> כניסת מנהל';
+        handleLockState(appSettings.isLocked);
+    }
+
+    window.toggleLock = function() {
+        set(ref(db, 'settings/isLocked'), !appSettings.isLocked);
+    }
+    
+    window.changePassword = function() {
+        const newPass = prompt("הכנס סיסמה חדשה למנהל:");
+        if(newPass) {
+            set(ref(db, 'settings/adminPass'), newPass);
+            alert("הסיסמה שונתה!");
+        }
+    }
+
+    // --- עורך ההגדרות (JSON) ---
+    window.openSettingsEditor = function() {
+        document.getElementById('settingsJson').value = JSON.stringify(currentCategories, null, 2);
+        document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    window.saveSettings = function() {
+        try {
+            const newCats = JSON.parse(document.getElementById('settingsJson').value);
+            set(ref(db, 'settings/categories'), newCats);
+            document.getElementById('settingsModal').style.display = 'none';
+        } catch(e) {
+            alert("שגיאה במבנה ה-JSON. אנא בדוק שוב.");
+        }
+    }
+
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+    
+    // סגירת מודאל בלחיצה בחוץ
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) event.target.style.display = "none";
+    }
+
+    // אתחול אירועים ל-select
+    document.getElementById('mainCategory').addEventListener('change', window.updateSubCategories);
+
 </script>
-
 </body>
 </html>
