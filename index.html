@@ -72,7 +72,6 @@
         .cat-card i { font-size: 2.2rem; margin-bottom: 10px; color: var(--primary); }
         .cat-card h3 { margin: 0; font-size: 1rem; font-weight: 600; }
         
-        /* עיצוב ייחודי למלבן העליון */
         .cat-card.all-cats {
             background: linear-gradient(135deg, var(--primary), #357abd);
             color: white;
@@ -85,9 +84,7 @@
         .cat-card.all-cats i { color: white; margin: 0; font-size: 1.8rem; }
         .cat-card.all-cats h3 { font-size: 1.3rem; }
 
-        /* כרטיס המשימות */
         .cat-card.tasks-card { border-bottom: 4px solid var(--accent); }
-        /* כרטיס המוצרים שלי */
         .cat-card.my-card { border-bottom: 4px solid var(--primary); background: #fdfdfd; }
 
         /* --- מסך פנימי --- */
@@ -168,12 +165,10 @@
             border-radius: 20px; font-size: 0.8rem; border: none; backdrop-filter: blur(5px); z-index: 5;
         }
 
-        /* מודאלים */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 80vh; overflow-y: auto; }
         .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
 
-        /* עיצוב עורך הקטגוריות החדש */
         .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; justify-content: center; }
         .tag-chip { 
             background: #f0f2f5; padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; 
@@ -192,8 +187,7 @@
         <p>בחר קטגוריה</p>
     </div>
 
-    <div class="grid-container" id="categoryGrid">
-        </div>
+    <div class="grid-container" id="categoryGrid"></div>
 </div>
 
 <div id="categoryView">
@@ -216,8 +210,7 @@
         <div id="lockedMsg" style="display:none; color:red; text-align:center; margin-top:5px;">הרשימה נעולה</div>
     </div>
 
-    <div id="listScrollArea">
-        </div>
+    <div id="listScrollArea"></div>
 </div>
 
 <div id="passwordModal" class="modal">
@@ -251,6 +244,9 @@
 
         <div class="editor-section">
             <button class="add-btn" onclick="toggleLock()" style="background:#ff6b6b; width:100%;">נעל/פתח הוספת מוצרים</button>
+            <button class="add-btn" onclick="hardResetCategories()" style="background:orange; width:100%; margin-top:10px; font-size:0.9rem;">
+                <i class="fas fa-wrench"></i> אפס קטגוריות למבנה תקין
+            </button>
         </div>
     </div>
 </div>
@@ -259,7 +255,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // הגדרות Firebase שלך
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -285,7 +280,6 @@
     let allData = {};
     let appSettings = {};
 
-    // --- מבנה הקטגוריות המעודכן ---
     const defaultCats = {
         osher_ad: { 
             label: "אושר עד", icon: "fa-cart-shopping", 
@@ -309,28 +303,13 @@
         }
     };
 
-    // --- טעינת נתונים עם מנגנון תיקון אוטומטי ---
     const settingsRef = ref(db, 'settings');
     onValue(settingsRef, (snap) => {
         const val = snap.val();
-        
-        // 1. אם אין הגדרות בכלל - צור חדשות
         if (!val) {
             set(settingsRef, { categories: defaultCats, locked: false, pass: "1234" });
             return;
         }
-
-        // 2. מנגנון תיקון: אם חסרה קטגוריה חדשה (למשל 'טמבור' במקום 'בניה') - עדכן את המסד
-        const currentKeys = Object.keys(val.categories || {});
-        const requiredKeys = ['osher_ad', 'tambour', 'max_stock', 'other', 'tasks'];
-        const missingKeys = requiredKeys.filter(k => !currentKeys.includes(k));
-
-        if (missingKeys.length > 0) {
-            // עדכון כפוי כדי שהמבנה החדש יופיע
-            update(ref(db, 'settings/categories'), defaultCats);
-            return; // onValue ירוץ שוב מיד אחרי העדכון
-        }
-
         appSettings = val;
         renderHome();
         if (currentViewKey) renderList();
@@ -341,12 +320,10 @@
         if (currentViewKey) renderList();
     });
 
-    // --- מסך הבית וניווט ---
     function renderHome() {
         const grid = document.getElementById('categoryGrid');
         grid.innerHTML = "";
 
-        // 1. כל הקטגוריות (למעלה)
         const allBtn = document.createElement('div');
         allBtn.className = 'cat-card all-cats';
         allBtn.innerHTML = `<i class="fas fa-layer-group"></i><h3>כל הקטגוריות</h3>`;
@@ -355,7 +332,6 @@
 
         const cats = appSettings.categories || defaultCats;
 
-        // פונקציית עזר ליצירת כרטיס
         const createCard = (key, data, customClass = '') => {
             const card = document.createElement('div');
             card.className = `cat-card ${customClass}`;
@@ -364,24 +340,18 @@
             grid.appendChild(card);
         };
 
-        // 2. סדר מובנה קבוע (כדי להבטיח שהם יופיעו בסדר שביקשת)
-        // הבדיקה if(cats.key) מוודאת שהקטגוריה קיימת בנתונים
         if(cats.osher_ad) createCard('osher_ad', cats.osher_ad);
         if(cats.tambour) createCard('tambour', cats.tambour);
         if(cats.max_stock) createCard('max_stock', cats.max_stock);
         if(cats.other) createCard('other', cats.other);
-        
-        // 3. משימות
         if(cats.tasks) createCard('tasks', cats.tasks, 'tasks-card');
 
-        // 4. המוצרים שהוספתי (כפתור מיוחד)
         const myCard = document.createElement('div');
         myCard.className = 'cat-card my-card';
         myCard.innerHTML = `<i class="fas fa-user-tag"></i><h3>המוצרים שהוספתי</h3>`;
         myCard.onclick = () => openCategory('my_added');
         grid.appendChild(myCard);
 
-        // כפתור עריכה למנהל
         if(isAdmin) {
             const editBtn = document.createElement('div');
             editBtn.className = 'cat-card';
@@ -401,7 +371,6 @@
         subSelect.innerHTML = "";
         const formDiv = document.getElementById('addForm');
 
-        // כותרת והגדרות תצוגה
         if (key === 'all_view') {
             document.getElementById('viewTitle').innerText = "כל הקטגוריות";
             const opt = document.createElement('option');
@@ -409,27 +378,27 @@
             opt.innerText = "כללי (יופיע בכל הרשימות)";
             subSelect.appendChild(opt);
             formDiv.style.visibility = "visible";
-        
         } else if (key === 'my_added') {
             document.getElementById('viewTitle').innerText = "המוצרים שהוספתי";
             formDiv.style.visibility = "hidden"; 
-        
         } else {
             const catData = (appSettings.categories || defaultCats)[key];
-            document.getElementById('viewTitle').innerText = catData.label;
-            formDiv.style.visibility = "visible";
-            
-            if (catData.subs) {
-                catData.subs.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub;
-                    opt.innerText = sub;
-                    subSelect.appendChild(opt);
-                });
+            if(catData) {
+                document.getElementById('viewTitle').innerText = catData.label;
+                formDiv.style.visibility = "visible";
+                if (catData.subs) {
+                    catData.subs.forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub;
+                        opt.innerText = sub;
+                        subSelect.appendChild(opt);
+                    });
+                }
+            } else {
+                 document.getElementById('viewTitle').innerText = "קטגוריה לא נמצאה";
             }
         }
         
-        // ניהול נעילה
         const locked = appSettings.locked && !isAdmin;
         if (key !== 'my_added') {
             formDiv.style.display = locked ? 'none' : 'flex';
@@ -454,8 +423,6 @@
         
         const items = Object.entries(allData).map(([id, val]) => ({ id, ...val }));
         const cats = appSettings.categories || defaultCats;
-
-        // סינון הפריטים
         let filteredItems = [];
 
         if (currentViewKey === 'all_view') {
@@ -465,7 +432,6 @@
         } else if (currentViewKey === 'tasks') {
             filteredItems = items.filter(i => i.mainCat === 'tasks');
         } else {
-            // קטגוריה ספציפית: פריטים שלה + פריטים גלובליים
             filteredItems = items.filter(i => 
                 i.mainCat === currentViewKey || i.mainCat === 'global'
             );
@@ -476,28 +442,22 @@
             return;
         }
 
-        // קיבוץ (Grouping)
         const grouped = {};
-
         filteredItems.forEach(item => {
             let groupKey = "";
-
             if (currentViewKey === 'my_added' || currentViewKey === 'all_view') {
                 if (item.mainCat === 'global') groupKey = "פריטים גלובליים";
                 else if (cats[item.mainCat]) groupKey = cats[item.mainCat].label;
                 else groupKey = "אחר";
             } else {
-                if (item.mainCat === 'global') groupKey = "zzz_global"; // טריק למיון
+                if (item.mainCat === 'global') groupKey = "zzz_global"; 
                 else groupKey = item.subCat;
             }
-
             if (!grouped[groupKey]) grouped[groupKey] = [];
             grouped[groupKey].push(item);
         });
 
-        // מיון המפתחות
         const sortedKeys = Object.keys(grouped).sort();
-
         sortedKeys.forEach(key => {
             const itemsInGroup = grouped[key];
             const headerDiv = document.createElement('div');
@@ -505,7 +465,6 @@
             
             if (key === 'zzz_global') headerDiv.innerText = "כללי (בכל הרשימות)";
             else headerDiv.innerText = key;
-
             container.appendChild(headerDiv);
 
             itemsInGroup.forEach(item => {
@@ -534,7 +493,6 @@
         });
     }
 
-    // --- פעולות הוספה ומחיקה ---
     window.addItem = function() {
         const name = document.getElementById('itemName').value;
         const qty = document.getElementById('itemQty').value;
@@ -542,7 +500,6 @@
         const note = document.getElementById('itemNote').value;
 
         if (!name.trim()) return;
-
         let mainCat = currentViewKey;
         if (currentViewKey === 'all_view') mainCat = 'global';
 
@@ -562,9 +519,7 @@
     }
 
     window.deleteItem = function(id) {
-        if(confirm("למחוק את הפריט?")) {
-            remove(ref(db, `shoppingList/${id}`));
-        }
+        if(confirm("למחוק את הפריט?")) remove(ref(db, `shoppingList/${id}`));
     }
 
     window.toggleNote = function(id) {
@@ -572,7 +527,6 @@
         if(el) el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
     }
 
-    // --- ניהול וממשק מנהל ---
     window.openAdminLogin = function() {
         if(isAdmin) { 
             isAdmin = false;
@@ -595,7 +549,6 @@
         }
     }
 
-    // --- עורך קטגוריות ---
     window.openSettingsUI = function() {
         const modal = document.getElementById('settingsModal');
         const select = document.getElementById('editorCatSelect');
@@ -635,9 +588,7 @@
         const key = document.getElementById('editorCatSelect').value;
         const input = document.getElementById('newSubInput');
         const newSub = input.value.trim();
-        
         if(!newSub) return;
-        
         const currentSubs = appSettings.categories[key].subs || [];
         if(!currentSubs.includes(newSub)) {
             const updatedSubs = [...currentSubs, newSub];
@@ -666,6 +617,19 @@
         update(ref(db, 'settings'), { locked: newLock });
         alert(newLock ? "רשימה ננעלה" : "רשימה נפתחה");
         document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    // פונקציית תיקון כפילויות חדשה
+    window.hardResetCategories = function() {
+        if(!confirm("פעולה זו תמחק קטגוריות ישנות/כפולות ותשאיר רק את 5 הקטגוריות הראשיות. להמשיך?")) return;
+        
+        // דריסה מלאה של ענף הקטגוריות ב-DB
+        set(ref(db, 'settings/categories'), defaultCats)
+        .then(() => {
+            alert("הקטגוריות אופסו בהצלחה!");
+            document.getElementById('settingsModal').style.display = 'none';
+        })
+        .catch(err => alert("שגיאה באיפוס: " + err));
     }
 
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
