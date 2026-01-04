@@ -259,7 +259,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // הגדרות Firebase שלך (נשמר מהקובץ הקודם)
+    // הגדרות Firebase שלך
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -274,7 +274,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // זיהוי משתמש
     let userId = localStorage.getItem('shop_uid');
     if(!userId) {
         userId = 'user_' + Math.random().toString(36).substr(2, 5);
@@ -286,8 +285,7 @@
     let allData = {};
     let appSettings = {};
 
-    // --- מבנה הקטגוריות (לפי בקשתך) ---
-    // הסדר כאן חשוב לשמירה ב-DB, אבל התצוגה נקבעת ב-renderHome
+    // --- מבנה הקטגוריות המעודכן ---
     const defaultCats = {
         osher_ad: { 
             label: "אושר עד", icon: "fa-cart-shopping", 
@@ -311,20 +309,29 @@
         }
     };
 
-    // --- טעינת נתונים ---
+    // --- טעינת נתונים עם מנגנון תיקון אוטומטי ---
     const settingsRef = ref(db, 'settings');
     onValue(settingsRef, (snap) => {
         const val = snap.val();
+        
+        // 1. אם אין הגדרות בכלל - צור חדשות
         if (!val) {
             set(settingsRef, { categories: defaultCats, locked: false, pass: "1234" });
             return;
         }
-        appSettings = val;
-        // עדכון מבנה אם חסר (למשל משימות)
-        if(!appSettings.categories.tasks) {
-             update(ref(db, 'settings/categories'), { tasks: defaultCats.tasks });
+
+        // 2. מנגנון תיקון: אם חסרה קטגוריה חדשה (למשל 'טמבור' במקום 'בניה') - עדכן את המסד
+        const currentKeys = Object.keys(val.categories || {});
+        const requiredKeys = ['osher_ad', 'tambour', 'max_stock', 'other', 'tasks'];
+        const missingKeys = requiredKeys.filter(k => !currentKeys.includes(k));
+
+        if (missingKeys.length > 0) {
+            // עדכון כפוי כדי שהמבנה החדש יופיע
+            update(ref(db, 'settings/categories'), defaultCats);
+            return; // onValue ירוץ שוב מיד אחרי העדכון
         }
-        
+
+        appSettings = val;
         renderHome();
         if (currentViewKey) renderList();
     });
@@ -357,7 +364,8 @@
             grid.appendChild(card);
         };
 
-        // 2. סדר ספציפי לפי הבקשה
+        // 2. סדר מובנה קבוע (כדי להבטיח שהם יופיעו בסדר שביקשת)
+        // הבדיקה if(cats.key) מוודאת שהקטגוריה קיימת בנתונים
         if(cats.osher_ad) createCard('osher_ad', cats.osher_ad);
         if(cats.tambour) createCard('tambour', cats.tambour);
         if(cats.max_stock) createCard('max_stock', cats.max_stock);
@@ -404,10 +412,9 @@
         
         } else if (key === 'my_added') {
             document.getElementById('viewTitle').innerText = "המוצרים שהוספתי";
-            formDiv.style.visibility = "hidden"; // אי אפשר להוסיף כאן, רק לצפות
+            formDiv.style.visibility = "hidden"; 
         
         } else {
-            // קטגוריה רגילה (כולל משימות)
             const catData = (appSettings.categories || defaultCats)[key];
             document.getElementById('viewTitle').innerText = catData.label;
             formDiv.style.visibility = "visible";
@@ -422,14 +429,13 @@
             }
         }
         
-        // נעילה
+        // ניהול נעילה
         const locked = appSettings.locked && !isAdmin;
-        // אם אנחנו במצב צפייה בלבד (המוצרים שלי), אין משמעות לנעילה
         if (key !== 'my_added') {
             formDiv.style.display = locked ? 'none' : 'flex';
             document.getElementById('lockedMsg').style.display = locked ? 'block' : 'none';
         } else {
-            formDiv.style.display = 'none'; // תמיד מוסתר ב"מוצרים שלי"
+            formDiv.style.display = 'none';
             document.getElementById('lockedMsg').style.display = 'none';
         }
 
@@ -453,13 +459,10 @@
         let filteredItems = [];
 
         if (currentViewKey === 'all_view') {
-            // הצג הכל
             filteredItems = items;
         } else if (currentViewKey === 'my_added') {
-            // רק מה שאני הוספתי
             filteredItems = items.filter(i => i.owner === userId);
         } else if (currentViewKey === 'tasks') {
-            // רק משימות (בלי גלובלי)
             filteredItems = items.filter(i => i.mainCat === 'tasks');
         } else {
             // קטגוריה ספציפית: פריטים שלה + פריטים גלובליים
@@ -479,19 +482,12 @@
         filteredItems.forEach(item => {
             let groupKey = "";
 
-            if (currentViewKey === 'my_added') {
-                // ב"מוצרים שלי" - הכותרת היא הקטגוריה הראשית
-                if (item.mainCat === 'global') groupKey = "כללי";
+            if (currentViewKey === 'my_added' || currentViewKey === 'all_view') {
+                if (item.mainCat === 'global') groupKey = "פריטים גלובליים";
                 else if (cats[item.mainCat]) groupKey = cats[item.mainCat].label;
                 else groupKey = "אחר";
-            } else if (currentViewKey === 'all_view') {
-                 // ב"הכל" - הכותרת היא הקטגוריה הראשית
-                 if (item.mainCat === 'global') groupKey = "פריטים גלובליים";
-                 else if (cats[item.mainCat]) groupKey = cats[item.mainCat].label;
-                 else groupKey = "אחר";
             } else {
-                // בתוך קטגוריה רגילה - כותרת היא תת הקטגוריה
-                if (item.mainCat === 'global') groupKey = "zzz_global"; // טריק למיון: שיופיע בסוף
+                if (item.mainCat === 'global') groupKey = "zzz_global"; // טריק למיון
                 else groupKey = item.subCat;
             }
 
@@ -499,7 +495,7 @@
             grouped[groupKey].push(item);
         });
 
-        // מיון המפתחות (כדי שהגלובלי יופיע בסוף בקטגוריות רגילות)
+        // מיון המפתחות
         const sortedKeys = Object.keys(grouped).sort();
 
         sortedKeys.forEach(key => {
@@ -507,7 +503,6 @@
             const headerDiv = document.createElement('div');
             headerDiv.className = 'sub-group-title';
             
-            // תצוגת שם הכותרת
             if (key === 'zzz_global') headerDiv.innerText = "כללי (בכל הרשימות)";
             else headerDiv.innerText = key;
 
@@ -549,7 +544,6 @@
         if (!name.trim()) return;
 
         let mainCat = currentViewKey;
-        // ב"כל הקטגוריות", הראשי הוא גלובל
         if (currentViewKey === 'all_view') mainCat = 'global';
 
         push(ref(db, 'shoppingList'), {
@@ -601,7 +595,7 @@
         }
     }
 
-    // --- עורך קטגוריות משופר (UI) ---
+    // --- עורך קטגוריות ---
     window.openSettingsUI = function() {
         const modal = document.getElementById('settingsModal');
         const select = document.getElementById('editorCatSelect');
@@ -649,9 +643,8 @@
             const updatedSubs = [...currentSubs, newSub];
             update(ref(db, `settings/categories/${key}`), { subs: updatedSubs });
             input.value = "";
-            // העדכון מ-Firebase יגרום לרענון אוטומטי של המסך דרך onValue
             setTimeout(() => { 
-                document.getElementById('editorCatSelect').value = key; // שמירת הבחירה
+                document.getElementById('editorCatSelect').value = key; 
                 renderEditorSubs(); 
             }, 300);
         }
