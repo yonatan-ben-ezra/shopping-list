@@ -26,12 +26,12 @@
             color: var(--dark);
             margin: 0; padding: 0;
             height: 100vh;
-            overflow: hidden; /* מונע גלילה של כל הדף */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        /* --- מסך בית (גריד קטגוריות) --- */
+        /* --- מסך בית --- */
         #homeView {
             padding: 20px;
             overflow-y: auto;
@@ -40,10 +40,7 @@
             flex-direction: column;
         }
 
-        .home-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .home-header { text-align: center; margin-bottom: 20px; }
         .home-header h1 { margin: 0; color: var(--primary); font-size: 2rem; }
         .home-header p { margin: 5px 0 0; color: #888; }
 
@@ -59,32 +56,41 @@
         .cat-card {
             background: white;
             border-radius: 20px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             box-shadow: var(--shadow);
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            aspect-ratio: 1/1; /* ריבוע */
+            aspect-ratio: 1/1;
         }
 
         .cat-card:active { transform: scale(0.95); }
-        .cat-card i { font-size: 2.5rem; margin-bottom: 10px; color: var(--primary); }
-        .cat-card h3 { margin: 0; font-size: 1.1rem; }
+        .cat-card i { font-size: 2.2rem; margin-bottom: 10px; color: var(--primary); }
+        .cat-card h3 { margin: 0; font-size: 1rem; font-weight: 600; }
         
+        /* עיצוב ייחודי למלבן העליון */
         .cat-card.all-cats {
             background: linear-gradient(135deg, var(--primary), #357abd);
             color: white;
-            grid-column: span 2; /* תופס את כל הרוחב */
+            grid-column: span 2;
             aspect-ratio: auto;
-            padding: 30px;
+            padding: 25px;
+            flex-direction: row;
+            gap: 15px;
         }
-        .cat-card.all-cats i { color: white; }
+        .cat-card.all-cats i { color: white; margin: 0; font-size: 1.8rem; }
+        .cat-card.all-cats h3 { font-size: 1.3rem; }
 
-        /* --- מסך קטגוריה פנימי --- */
+        /* כרטיס המשימות */
+        .cat-card.tasks-card { border-bottom: 4px solid var(--accent); }
+        /* כרטיס המוצרים שלי */
+        .cat-card.my-card { border-bottom: 4px solid var(--primary); background: #fdfdfd; }
+
+        /* --- מסך פנימי --- */
         #categoryView {
             display: none;
             flex-direction: column;
@@ -92,7 +98,6 @@
             background: #fff;
         }
 
-        /* חלק עליון קבוע (Sticky) */
         .sticky-section {
             background: var(--glass);
             padding: 15px;
@@ -108,18 +113,10 @@
             margin-bottom: 15px;
         }
 
-        .back-btn {
-            background: #eee; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer;
-        }
-        .view-title { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .back-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .view-title { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
 
-        /* טופס הוספה */
-        .add-form {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .add-form { display: flex; flex-direction: column; gap: 10px; }
         .input-row { display: flex; gap: 10px; }
         
         select, input, textarea {
@@ -136,89 +133,53 @@
         #itemQty { width: 70px; text-align: center; }
         
         .add-btn {
-            background: var(--accent);
-            color: var(--dark);
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
+            background: var(--accent); color: var(--dark); border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer;
             box-shadow: 0 4px 10px rgba(80, 227, 194, 0.3);
         }
 
-        /* --- רשימת המוצרים (נגללת) --- */
-        #listScrollArea {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background: #fcfcfc;
-        }
+        #listScrollArea { flex-grow: 1; overflow-y: auto; padding: 15px; background: #fcfcfc; padding-bottom: 50px; }
 
         .sub-group-title {
-            font-size: 0.9rem;
-            color: #888;
-            margin: 20px 0 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            font-size: 0.9rem; color: #888; margin: 25px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-weight: bold;
         }
 
         .product-item {
-            background: white;
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            transition: all 0.2s;
-            position: relative;
+            background: white; border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.2s;
         }
 
         .qty-circle {
-            width: 35px; height: 35px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold;
-            margin-left: 10px;
-            flex-shrink: 0;
-            font-size: 0.9rem;
+            width: 35px; height: 35px; background: var(--primary); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; margin-left: 10px; flex-shrink: 0; font-size: 0.9rem;
         }
 
-        .item-content {
-            flex-grow: 1;
-            cursor: pointer;
-        }
-
+        .item-content { flex-grow: 1; cursor: pointer; }
         .item-name { font-weight: 600; font-size: 1.1rem; }
-        .item-note { 
-            font-size: 0.85rem; color: #666; background: #f0f0f0; 
-            padding: 5px 10px; border-radius: 6px; margin-top: 5px; 
-            display: none; /* מוסתר בהתחלה */
-        }
+        .item-note { font-size: 0.85rem; color: #666; background: #f0f0f0; padding: 5px 10px; border-radius: 6px; margin-top: 5px; display: none; }
         .global-badge { color: gold; font-size: 0.8rem; margin-right: 5px; }
 
         .delete-btn {
-            background: #ffecec; color: var(--danger);
-            border: none; width: 30px; height: 30px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            margin-right: 10px; cursor: pointer;
+            background: #ffecec; color: var(--danger); border: none; width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; margin-right: 10px; cursor: pointer;
         }
 
-        /* --- אדמין וכפתורים צפים --- */
         .admin-float {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(255,255,255,0.8); padding: 5px 10px;
-            border-radius: 20px; font-size: 0.8rem; border: none;
-            backdrop-filter: blur(5px);
+            position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px;
+            border-radius: 20px; font-size: 0.8rem; border: none; backdrop-filter: blur(5px); z-index: 5;
         }
 
         /* מודאלים */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; max-height: 80vh; overflow-y: auto; }
         .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
+
+        /* עיצוב עורך הקטגוריות החדש */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; justify-content: center; }
+        .tag-chip { 
+            background: #f0f2f5; padding: 5px 10px; border-radius: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; 
+        }
+        .tag-chip i { color: var(--danger); cursor: pointer; }
+        .editor-section { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -228,7 +189,7 @@
     
     <div class="home-header">
         <h1>הקניות שלנו</h1>
-        <p>בחר קטגוריה כדי להתחיל</p>
+        <p>בחר קטגוריה</p>
     </div>
 
     <div class="grid-container" id="categoryGrid">
@@ -240,18 +201,16 @@
         <div class="view-header">
             <button class="back-btn" onclick="backToHome()"><i class="fas fa-arrow-right"></i> חזרה</button>
             <div class="view-title" id="viewTitle">שם הקטגוריה</div>
-            <div style="width: 60px;"></div> </div>
+            <div style="width: 60px;"></div>
+        </div>
 
         <div class="add-form" id="addForm">
             <select id="subCatSelect"></select>
-            
             <div class="input-row">
-                <input type="text" id="itemName" placeholder="שם מוצר...">
+                <input type="text" id="itemName" placeholder="שם מוצר/משימה...">
                 <input type="number" id="itemQty" placeholder="כמות" value="1" min="1">
             </div>
-            
             <textarea id="itemNote" rows="1" placeholder="הערה (אופציונלי)" style="resize: none;"></textarea>
-            
             <button class="add-btn" onclick="addItem()">הוסף לרשימה <i class="fas fa-plus"></i></button>
         </div>
         <div id="lockedMsg" style="display:none; color:red; text-align:center; margin-top:5px;">הרשימה נעולה</div>
@@ -271,14 +230,28 @@
 </div>
 
 <div id="settingsModal" class="modal">
-    <div class="modal-content" style="max-width:500px;">
+    <div class="modal-content">
         <span class="close-modal" onclick="closeModal('settingsModal')">&times;</span>
-        <h3>עריכת קטגוריות (JSON)</h3>
-        <p style="font-size:0.8rem; color:#666;">יש להיזהר בעריכה. זה המבנה של האתר.</p>
-        <textarea id="jsonEditor" style="width:100%; height:200px; direction:ltr; font-family:monospace;"></textarea>
-        <br><br>
-        <button class="add-btn" onclick="saveSettings()">שמור שינויים</button>
-        <button class="add-btn" onclick="toggleLock()" style="background:#ff6b6b; margin-top:10px;">נעל/פתח הוספה</button>
+        <h3><i class="fas fa-cog"></i> ניהול קטגוריות</h3>
+        
+        <div class="editor-section">
+            <label>בחר קטגוריה לעריכה:</label>
+            <select id="editorCatSelect" onchange="renderEditorSubs()"></select>
+        </div>
+
+        <div class="editor-section" id="subsEditorArea" style="display:none;">
+            <h4>תתי קטגוריות קיימות:</h4>
+            <div class="tags-container" id="editorTags"></div>
+            
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <input type="text" id="newSubInput" placeholder="תת קטגוריה חדשה...">
+                <button onclick="addNewSub()" style="background:var(--primary); color:white; border:none; border-radius:8px; width:40px;"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <button class="add-btn" onclick="toggleLock()" style="background:#ff6b6b; width:100%;">נעל/פתח הוספת מוצרים</button>
+        </div>
     </div>
 </div>
 
@@ -286,8 +259,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // --- הגדרות ה-FIREBASE שלך ---
-    // העתק לכאן את הנתונים שלך
+    // הגדרות Firebase שלך (נשמר מהקובץ הקודם)
     const firebaseConfig = {
         apiKey: "AIzaSyAoXUKwnQpcxyZdYCT9PUh-yjmOj6kugTQ",
         authDomain: "family-shopping-891f7.firebaseapp.com",
@@ -303,36 +275,39 @@
     const db = getDatabase(app);
 
     // זיהוי משתמש
-    let userId = localStorage.getItem('shop_uid') || 'user_' + Math.random().toString(36).substr(2, 5);
-    localStorage.setItem('shop_uid', userId);
+    let userId = localStorage.getItem('shop_uid');
+    if(!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 5);
+        localStorage.setItem('shop_uid', userId);
+    }
 
-    // משתנים גלובליים
     let isAdmin = false;
-    let currentViewKey = null; // הקטגוריה שבה אנחנו צופים כרגע
+    let currentViewKey = null;
     let allData = {};
     let appSettings = {};
 
-    // ברירת מחדל לקטגוריות לפי בקשתך
+    // --- מבנה הקטגוריות (לפי בקשתך) ---
+    // הסדר כאן חשוב לשמירה ב-DB, אבל התצוגה נקבעת ב-renderHome
     const defaultCats = {
         osher_ad: { 
             label: "אושר עד", icon: "fa-cart-shopping", 
             subs: ["פירות וירקות", "קפואים", "סלטים", "מוצרי חלב", "מצרכים", "חד פעמי", "ניקיון", "אחר"] 
         },
+        tambour: { 
+            label: "טמבור", icon: "fa-screwdriver-wrench", 
+            subs: ["חשמל", "כלי עבודה", "פרזול", "חומרי מליטה", "אחר"] 
+        },
         max_stock: { 
             label: "מקס סטוק", icon: "fa-box-open", 
             subs: ["אחר"] 
         },
-        tambour: { 
-            label: "טמבור", icon: "fa-tools", 
-            subs: ["חשמל", "כלי עבודה", "פרזול", "חומרי מליטה", "אחר"] 
-        },
-        pickups: { 
-            label: "איסוף משלוחים", icon: "fa-envelope", 
-            subs: ["קניות ישראל תלפיות", "בשכונה", "גילה", "מלחה", "אחר"] 
-        },
         other: { 
             label: "אחר", icon: "fa-star", 
             subs: ["כללי"] 
+        },
+        tasks: {
+            label: "משימות", icon: "fa-list-check",
+            subs: ["לביצוע", "דחוף"]
         }
     };
 
@@ -345,8 +320,13 @@
             return;
         }
         appSettings = val;
+        // עדכון מבנה אם חסר (למשל משימות)
+        if(!appSettings.categories.tasks) {
+             update(ref(db, 'settings/categories'), { tasks: defaultCats.tasks });
+        }
+        
         renderHome();
-        if (currentViewKey) renderList(); // רענון אם אנחנו בתוך קטגוריה
+        if (currentViewKey) renderList();
     });
 
     onValue(ref(db, 'shoppingList'), (snap) => {
@@ -354,28 +334,44 @@
         if (currentViewKey) renderList();
     });
 
-    // --- ניווט ורינדור ---
-
+    // --- מסך הבית וניווט ---
     function renderHome() {
         const grid = document.getElementById('categoryGrid');
         grid.innerHTML = "";
 
-        // כפתור "כל הקטגוריות"
+        // 1. כל הקטגוריות (למעלה)
         const allBtn = document.createElement('div');
         allBtn.className = 'cat-card all-cats';
         allBtn.innerHTML = `<i class="fas fa-layer-group"></i><h3>כל הקטגוריות</h3>`;
         allBtn.onclick = () => openCategory('all_view');
         grid.appendChild(allBtn);
 
-        // שאר הקטגוריות
         const cats = appSettings.categories || defaultCats;
-        Object.entries(cats).forEach(([key, data]) => {
+
+        // פונקציית עזר ליצירת כרטיס
+        const createCard = (key, data, customClass = '') => {
             const card = document.createElement('div');
-            card.className = 'cat-card';
+            card.className = `cat-card ${customClass}`;
             card.innerHTML = `<i class="fas ${data.icon || 'fa-circle'}"></i><h3>${data.label}</h3>`;
             card.onclick = () => openCategory(key);
             grid.appendChild(card);
-        });
+        };
+
+        // 2. סדר ספציפי לפי הבקשה
+        if(cats.osher_ad) createCard('osher_ad', cats.osher_ad);
+        if(cats.tambour) createCard('tambour', cats.tambour);
+        if(cats.max_stock) createCard('max_stock', cats.max_stock);
+        if(cats.other) createCard('other', cats.other);
+        
+        // 3. משימות
+        if(cats.tasks) createCard('tasks', cats.tasks, 'tasks-card');
+
+        // 4. המוצרים שהוספתי (כפתור מיוחד)
+        const myCard = document.createElement('div');
+        myCard.className = 'cat-card my-card';
+        myCard.innerHTML = `<i class="fas fa-user-tag"></i><h3>המוצרים שהוספתי</h3>`;
+        myCard.onclick = () => openCategory('my_added');
+        grid.appendChild(myCard);
 
         // כפתור עריכה למנהל
         if(isAdmin) {
@@ -383,10 +379,7 @@
             editBtn.className = 'cat-card';
             editBtn.style.background = '#eee';
             editBtn.innerHTML = '<i class="fas fa-cog"></i><h3>הגדרות</h3>';
-            editBtn.onclick = () => {
-                document.getElementById('jsonEditor').value = JSON.stringify(appSettings.categories, null, 2);
-                document.getElementById('settingsModal').style.display = 'flex';
-            };
+            editBtn.onclick = openSettingsUI;
             grid.appendChild(editBtn);
         }
     }
@@ -396,40 +389,49 @@
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('categoryView').style.display = 'flex';
         
-        const isAll = key === 'all_view';
-        const cats = appSettings.categories || defaultCats;
-        const currentCat = cats[key];
-
-        // כותרת
-        document.getElementById('viewTitle').innerText = isAll ? "כל הקטגוריות" : currentCat.label;
-
-        // סלקט תתי קטגוריות
         const subSelect = document.getElementById('subCatSelect');
         subSelect.innerHTML = "";
-        
-        if (isAll) {
-            // ב"כל הקטגוריות", הוספה היא גלובלית
-            // למרות שהמשתמש ביקש "הוסף מוצרים שיופיעו בכל הרשימות", נחבר אותם לקטגוריה "כללי" או מיוחדת
-            // נשתמש בקטגוריה הראשית כמזהה
+        const formDiv = document.getElementById('addForm');
+
+        // כותרת והגדרות תצוגה
+        if (key === 'all_view') {
+            document.getElementById('viewTitle').innerText = "כל הקטגוריות";
             const opt = document.createElement('option');
             opt.value = "global";
-            opt.innerText = "מוצר שמופיע בכל הרשימות";
+            opt.innerText = "כללי (יופיע בכל הרשימות)";
             subSelect.appendChild(opt);
-            
-            // אפשר להוסיף כאן לוגיקה שתאפשר לבחור לאיזו קטגוריה להוסיף, אבל הפשטות עדיפה
+            formDiv.style.visibility = "visible";
+        
+        } else if (key === 'my_added') {
+            document.getElementById('viewTitle').innerText = "המוצרים שהוספתי";
+            formDiv.style.visibility = "hidden"; // אי אפשר להוסיף כאן, רק לצפות
+        
         } else {
-            currentCat.subs.forEach(sub => {
-                const opt = document.createElement('option');
-                opt.value = sub;
-                opt.innerText = sub;
-                subSelect.appendChild(opt);
-            });
+            // קטגוריה רגילה (כולל משימות)
+            const catData = (appSettings.categories || defaultCats)[key];
+            document.getElementById('viewTitle').innerText = catData.label;
+            formDiv.style.visibility = "visible";
+            
+            if (catData.subs) {
+                catData.subs.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub;
+                    opt.innerText = sub;
+                    subSelect.appendChild(opt);
+                });
+            }
         }
         
         // נעילה
         const locked = appSettings.locked && !isAdmin;
-        document.getElementById('addForm').style.display = locked ? 'none' : 'flex';
-        document.getElementById('lockedMsg').style.display = locked ? 'block' : 'none';
+        // אם אנחנו במצב צפייה בלבד (המוצרים שלי), אין משמעות לנעילה
+        if (key !== 'my_added') {
+            formDiv.style.display = locked ? 'none' : 'flex';
+            document.getElementById('lockedMsg').style.display = locked ? 'block' : 'none';
+        } else {
+            formDiv.style.display = 'none'; // תמיד מוסתר ב"מוצרים שלי"
+            document.getElementById('lockedMsg').style.display = 'none';
+        }
 
         renderList();
     }
@@ -445,37 +447,51 @@
         container.innerHTML = "";
         
         const items = Object.entries(allData).map(([id, val]) => ({ id, ...val }));
-        const isAllView = currentViewKey === 'all_view';
+        const cats = appSettings.categories || defaultCats;
 
-        // סינון: מה מציגים?
-        // אם אנחנו ב"כל הקטגוריות": מציגים הכל.
-        // אם אנחנו בקטגוריה ספציפית: מציגים מוצרים שלה + מוצרים גלובליים.
-        const filteredItems = items.filter(item => {
-            if (isAllView) return true;
-            return item.mainCat === currentViewKey || item.mainCat === 'global';
-        });
+        // סינון הפריטים
+        let filteredItems = [];
+
+        if (currentViewKey === 'all_view') {
+            // הצג הכל
+            filteredItems = items;
+        } else if (currentViewKey === 'my_added') {
+            // רק מה שאני הוספתי
+            filteredItems = items.filter(i => i.owner === userId);
+        } else if (currentViewKey === 'tasks') {
+            // רק משימות (בלי גלובלי)
+            filteredItems = items.filter(i => i.mainCat === 'tasks');
+        } else {
+            // קטגוריה ספציפית: פריטים שלה + פריטים גלובליים
+            filteredItems = items.filter(i => 
+                i.mainCat === currentViewKey || i.mainCat === 'global'
+            );
+        }
 
         if (filteredItems.length === 0) {
-            container.innerHTML = '<div style="text-align:center; margin-top:30px; color:#aaa;">אין מוצרים ברשימה</div>';
+            container.innerHTML = '<div style="text-align:center; margin-top:30px; color:#aaa;">הקטגוריה ריקה</div>';
             return;
         }
 
         // קיבוץ (Grouping)
-        // אם אנחנו ב"הכל" - נקבץ לפי קטגוריה ראשית
-        // אם אנחנו בקטגוריה - נקבץ לפי תת-קטגוריה
         const grouped = {};
-        const cats = appSettings.categories || defaultCats;
 
         filteredItems.forEach(item => {
-            let groupKey;
-            
-            if (isAllView) {
-                // תצוגת הכל: כותרת היא הקטגוריה הראשית
-                if (item.mainCat === 'global') groupKey = "מוצרים בכל הרשימות";
-                else groupKey = cats[item.mainCat] ? cats[item.mainCat].label : "אחר";
+            let groupKey = "";
+
+            if (currentViewKey === 'my_added') {
+                // ב"מוצרים שלי" - הכותרת היא הקטגוריה הראשית
+                if (item.mainCat === 'global') groupKey = "כללי";
+                else if (cats[item.mainCat]) groupKey = cats[item.mainCat].label;
+                else groupKey = "אחר";
+            } else if (currentViewKey === 'all_view') {
+                 // ב"הכל" - הכותרת היא הקטגוריה הראשית
+                 if (item.mainCat === 'global') groupKey = "פריטים גלובליים";
+                 else if (cats[item.mainCat]) groupKey = cats[item.mainCat].label;
+                 else groupKey = "אחר";
             } else {
-                // תצוגה רגילה: כותרת היא תת הקטגוריה
-                if (item.mainCat === 'global') groupKey = "כללי (מופיע בכל הרשימות)";
+                // בתוך קטגוריה רגילה - כותרת היא תת הקטגוריה
+                if (item.mainCat === 'global') groupKey = "zzz_global"; // טריק למיון: שיופיע בסוף
                 else groupKey = item.subCat;
             }
 
@@ -483,21 +499,25 @@
             grouped[groupKey].push(item);
         });
 
-        // יצירת ה-HTML
-        Object.keys(grouped).forEach(groupTitle => {
-            const header = document.createElement('div');
-            header.className = 'sub-group-title';
-            header.innerText = groupTitle;
-            container.appendChild(header);
+        // מיון המפתחות (כדי שהגלובלי יופיע בסוף בקטגוריות רגילות)
+        const sortedKeys = Object.keys(grouped).sort();
 
-            grouped[groupTitle].forEach(item => {
+        sortedKeys.forEach(key => {
+            const itemsInGroup = grouped[key];
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'sub-group-title';
+            
+            // תצוגת שם הכותרת
+            if (key === 'zzz_global') headerDiv.innerText = "כללי (בכל הרשימות)";
+            else headerDiv.innerText = key;
+
+            container.appendChild(headerDiv);
+
+            itemsInGroup.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'product-item';
                 
-                // כפתור מחיקה
                 const canDelete = isAdmin || item.owner === userId;
-                // מחיקה של מוצר גלובלי תמחק מכולם כי הוא פשוט אובייקט אחד בבסיס הנתונים
-                
                 const deleteHtml = canDelete ? 
                     `<button class="delete-btn" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : 
                     `<div style="width:40px;"></div>`;
@@ -519,8 +539,7 @@
         });
     }
 
-    // --- פעולות ---
-
+    // --- פעולות הוספה ומחיקה ---
     window.addItem = function() {
         const name = document.getElementById('itemName').value;
         const qty = document.getElementById('itemQty').value;
@@ -529,46 +548,42 @@
 
         if (!name.trim()) return;
 
-        // אם אנחנו ב"כל הקטגוריות", הקטגוריה הראשית היא 'global'
-        const mainCat = currentViewKey === 'all_view' ? 'global' : currentViewKey;
+        let mainCat = currentViewKey;
+        // ב"כל הקטגוריות", הראשי הוא גלובל
+        if (currentViewKey === 'all_view') mainCat = 'global';
 
         push(ref(db, 'shoppingList'), {
             name: name,
             qty: qty,
             mainCat: mainCat,
-            subCat: sub, // במקרה של גלובל זה יהיה "global"
+            subCat: sub, 
             note: note,
             owner: userId,
             created: Date.now()
         });
 
-        // ניקוי
         document.getElementById('itemName').value = "";
         document.getElementById('itemNote').value = "";
         document.getElementById('itemQty').value = "1";
     }
 
     window.deleteItem = function(id) {
-        if(confirm("למחוק?")) {
+        if(confirm("למחוק את הפריט?")) {
             remove(ref(db, `shoppingList/${id}`));
         }
     }
 
     window.toggleNote = function(id) {
         const el = document.getElementById(`note-${id}`);
-        if(el) {
-            el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
-        }
+        if(el) el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
     }
 
-    // --- אדמין ---
-
+    // --- ניהול וממשק מנהל ---
     window.openAdminLogin = function() {
-        if(isAdmin) { // אם כבר מחובר, התנתק
+        if(isAdmin) { 
             isAdmin = false;
             alert("התנתקת");
             renderHome();
-            if(currentViewKey) renderList(); // עדכון מצב נעילה
             return;
         }
         document.getElementById('passwordModal').style.display = 'flex';
@@ -580,27 +595,84 @@
             isAdmin = true;
             document.getElementById('passwordModal').style.display = 'none';
             alert("מחובר כמנהל");
-            renderHome(); // יציג כפתור הגדרות
-            if(currentViewKey) {
-                 openCategory(currentViewKey); // רענון נעילות
-            }
+            renderHome();
         } else {
             alert("סיסמה שגויה");
         }
     }
 
-    window.saveSettings = function() {
-        try {
-            const newCats = JSON.parse(document.getElementById('jsonEditor').value);
-            update(ref(db, 'settings'), { categories: newCats });
-            document.getElementById('settingsModal').style.display = 'none';
-        } catch(e) { alert("שגיאה בקוד JSON"); }
+    // --- עורך קטגוריות משופר (UI) ---
+    window.openSettingsUI = function() {
+        const modal = document.getElementById('settingsModal');
+        const select = document.getElementById('editorCatSelect');
+        select.innerHTML = '<option value="">בחר...</option>';
+        
+        Object.entries(appSettings.categories).forEach(([key, val]) => {
+            const op = document.createElement('option');
+            op.value = key;
+            op.innerText = val.label;
+            select.appendChild(op);
+        });
+
+        document.getElementById('subsEditorArea').style.display = 'none';
+        modal.style.display = 'flex';
+    }
+
+    window.renderEditorSubs = function() {
+        const key = document.getElementById('editorCatSelect').value;
+        const area = document.getElementById('subsEditorArea');
+        const tagsDiv = document.getElementById('editorTags');
+        
+        if(!key) { area.style.display = 'none'; return; }
+        
+        area.style.display = 'block';
+        tagsDiv.innerHTML = "";
+        
+        const subs = appSettings.categories[key].subs || [];
+        subs.forEach(sub => {
+            const tag = document.createElement('div');
+            tag.className = 'tag-chip';
+            tag.innerHTML = `${sub} <i class="fas fa-times-circle" onclick="removeSub('${key}', '${sub}')"></i>`;
+            tagsDiv.appendChild(tag);
+        });
+    }
+
+    window.addNewSub = function() {
+        const key = document.getElementById('editorCatSelect').value;
+        const input = document.getElementById('newSubInput');
+        const newSub = input.value.trim();
+        
+        if(!newSub) return;
+        
+        const currentSubs = appSettings.categories[key].subs || [];
+        if(!currentSubs.includes(newSub)) {
+            const updatedSubs = [...currentSubs, newSub];
+            update(ref(db, `settings/categories/${key}`), { subs: updatedSubs });
+            input.value = "";
+            // העדכון מ-Firebase יגרום לרענון אוטומטי של המסך דרך onValue
+            setTimeout(() => { 
+                document.getElementById('editorCatSelect').value = key; // שמירת הבחירה
+                renderEditorSubs(); 
+            }, 300);
+        }
+    }
+
+    window.removeSub = function(key, subToRemove) {
+        if(!confirm(`למחוק את ${subToRemove}?`)) return;
+        const currentSubs = appSettings.categories[key].subs || [];
+        const updatedSubs = currentSubs.filter(s => s !== subToRemove);
+        update(ref(db, `settings/categories/${key}`), { subs: updatedSubs });
+        setTimeout(() => { 
+             document.getElementById('editorCatSelect').value = key;
+             renderEditorSubs(); 
+        }, 300);
     }
 
     window.toggleLock = function() {
         const newLock = !appSettings.locked;
         update(ref(db, 'settings'), { locked: newLock });
         alert(newLock ? "רשימה ננעלה" : "רשימה נפתחה");
+        document.getElementById('settingsModal').style.display = 'none';
     }
 
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
