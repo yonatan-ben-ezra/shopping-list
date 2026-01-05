@@ -460,4 +460,322 @@
             document.getElementById('viewTitle').innerText = "המוצרים שהוספתי";
             formDiv.style.visibility = "hidden"; 
         } else {
-            const cat
+            const catData = (appSettings.categories || defaultCats)[key];
+            if(catData) {
+                document.getElementById('viewTitle').innerText = catData.label;
+                formDiv.style.visibility = "visible";
+                if (catData.subs) {
+                    catData.subs.forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub;
+                        opt.innerText = sub;
+                        subSelect.appendChild(opt);
+                    });
+                }
+            } else {
+                 document.getElementById('viewTitle').innerText = "קטגוריה לא נמצאה";
+            }
+        }
+        
+        const locked = appSettings.locked && !isAdmin;
+        if (key !== 'my_added') {
+            formDiv.style.display = locked ? 'none' : 'flex';
+            document.getElementById('lockedMsg').style.display = locked ? 'block' : 'none';
+        } else {
+            formDiv.style.display = 'none';
+            document.getElementById('lockedMsg').style.display = 'none';
+        }
+
+        renderList();
+    }
+
+    window.backToHome = function() {
+        currentViewKey = null;
+        document.getElementById('categoryView').style.display = 'none';
+        document.getElementById('homeView').style.display = 'flex';
+    }
+
+    function renderList() {
+        const container = document.getElementById('listScrollArea');
+        container.innerHTML = "";
+        
+        const items = Object.entries(allData).map(([id, val]) => ({ id, ...val }));
+        const cats = appSettings.categories || defaultCats;
+        let filteredItems = [];
+
+        if (currentViewKey === 'all_view') {
+            filteredItems = items;
+        } else if (currentViewKey === 'my_added') {
+            filteredItems = items.filter(i => i.owner === userId);
+        } else if (currentViewKey === 'tasks') {
+            filteredItems = items.filter(i => i.mainCat === 'tasks');
+        } else {
+            filteredItems = items.filter(i => 
+                i.mainCat === currentViewKey || i.mainCat === 'global'
+            );
+        }
+
+        if (filteredItems.length === 0) {
+            container.innerHTML = '<div style="text-align:center; margin-top:30px; color:#aaa;">הקטגוריה ריקה</div>';
+            return;
+        }
+
+        const grouped = {};
+        
+        filteredItems.forEach(item => {
+            let groupKey = "";
+            let prefix = ""; 
+            let title = "";
+
+            if (currentViewKey === 'all_view') {
+                if (item.mainCat === 'global') {
+                    prefix = "0_";
+                    title = "פריטים גלובליים";
+                } else {
+                    prefix = "1_";
+                    title = cats[item.mainCat] ? cats[item.mainCat].label : "אחר";
+                }
+            } else if (currentViewKey === 'my_added') {
+                if (item.mainCat === 'global') {
+                    prefix = "1_"; title = "כללי";
+                } else {
+                    prefix = "1_";
+                    title = cats[item.mainCat] ? cats[item.mainCat].label : "אחר";
+                }
+            } else if (currentViewKey === 'tasks') {
+                prefix = "1_"; title = item.subCat;
+            } else {
+                if (item.mainCat === 'global') {
+                    prefix = "z_"; 
+                    title = "כללי (בכל הרשימות)";
+                } else {
+                    prefix = "a_"; 
+                    title = item.subCat;
+                }
+            }
+
+            groupKey = prefix + "###" + title;
+
+            if (!grouped[groupKey]) grouped[groupKey] = [];
+            grouped[groupKey].push(item);
+        });
+
+        const sortedKeys = Object.keys(grouped).sort();
+
+        sortedKeys.forEach(fullKey => {
+            const displayTitle = fullKey.includes("###") ? fullKey.split("###")[1] : fullKey;
+            
+            const itemsInGroup = grouped[fullKey];
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'sub-group-title';
+            headerDiv.innerText = displayTitle;
+            container.appendChild(headerDiv);
+
+            itemsInGroup.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'product-item';
+                
+                const canDelete = isAdmin || item.owner === userId;
+                const deleteHtml = canDelete ? 
+                    `<button class="delete-btn" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : 
+                    `<div style="width:40px;"></div>`;
+
+                const isGlobal = item.mainCat === 'global';
+                const noteHtml = item.note ? `<div class="item-note" id="note-${item.id}">${item.note}</div>` : '';
+                const globalIcon = isGlobal ? '<i class="fas fa-star global-badge"></i>' : '';
+
+                // סדר התצוגה: כמות מימין, תוכן במרכז, מחיקה משמאל
+                div.innerHTML = `
+                    <div class="qty-circle">${item.qty}</div>
+                    <div class="item-content" onclick="toggleNote('${item.id}')">
+                        <div class="item-name">${globalIcon}${item.name}</div>
+                        ${noteHtml}
+                    </div>
+                    ${deleteHtml}
+                `;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    // --- לוגיקת סרגל כמות ---
+    window.toggleQtyBar = function() {
+        const bar = document.getElementById('qtyToolbar');
+        if (bar.style.display === 'block') {
+            bar.style.display = 'none';
+        } else {
+            // יצירת הכפתורים בסרגל
+            bar.innerHTML = '';
+            for(let i=1; i<=10; i++) {
+                const numDiv = document.createElement('div');
+                numDiv.className = 'qty-option';
+                numDiv.innerText = i;
+                numDiv.onclick = function() { 
+                    document.getElementById('itemQty').value = i;
+                    bar.style.display = 'none';
+                };
+                bar.appendChild(numDiv);
+            }
+            bar.style.display = 'block';
+        }
+    }
+
+    // --- לוגיקת הערה ---
+    window.editNote = function() {
+        const text = prompt("הכנס הערה למוצר:", currentNote);
+        if (text !== null) {
+            currentNote = text;
+            updateNoteBtnState();
+        }
+    }
+
+    function updateNoteBtnState() {
+        const btn = document.getElementById('noteBtn');
+        if (currentNote && currentNote.trim() !== "") {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    window.addItem = function() {
+        const name = document.getElementById('itemName').value;
+        const qty = document.getElementById('itemQty').value;
+        const sub = document.getElementById('subCatSelect').value;
+        
+        if (!name.trim()) return;
+        let mainCat = currentViewKey;
+        if (currentViewKey === 'all_view') mainCat = 'global';
+
+        push(ref(db, 'shoppingList'), {
+            name: name,
+            qty: qty,
+            mainCat: mainCat,
+            subCat: sub, 
+            note: currentNote,
+            owner: userId,
+            created: Date.now()
+        });
+
+        document.getElementById('itemName').value = "";
+        document.getElementById('itemQty').value = "1";
+        currentNote = "";
+        updateNoteBtnState();
+    }
+
+    window.deleteItem = function(id) {
+        if(confirm("למחוק את הפריט?")) remove(ref(db, `shoppingList/${id}`));
+    }
+
+    window.toggleNote = function(id) {
+        const el = document.getElementById(`note-${id}`);
+        if(el) el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
+    }
+
+    window.openAdminLogin = function() {
+        if(isAdmin) { 
+            isAdmin = false;
+            alert("התנתקת");
+            renderHome();
+            return;
+        }
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    window.checkPass = function() {
+        const inp = document.getElementById('adminPass').value;
+        if (inp === (appSettings.pass || "1234")) {
+            isAdmin = true;
+            document.getElementById('passwordModal').style.display = 'none';
+            alert("מחובר כמנהל");
+            renderHome();
+        } else {
+            alert("סיסמה שגויה");
+        }
+    }
+
+    window.openSettingsUI = function() {
+        const modal = document.getElementById('settingsModal');
+        const select = document.getElementById('editorCatSelect');
+        select.innerHTML = '<option value="">בחר...</option>';
+        
+        Object.entries(appSettings.categories).forEach(([key, val]) => {
+            const op = document.createElement('option');
+            op.value = key;
+            op.innerText = val.label;
+            select.appendChild(op);
+        });
+
+        document.getElementById('subsEditorArea').style.display = 'none';
+        modal.style.display = 'flex';
+    }
+
+    window.renderEditorSubs = function() {
+        const key = document.getElementById('editorCatSelect').value;
+        const area = document.getElementById('subsEditorArea');
+        const tagsDiv = document.getElementById('editorTags');
+        
+        if(!key) { area.style.display = 'none'; return; }
+        
+        area.style.display = 'block';
+        tagsDiv.innerHTML = "";
+        
+        const subs = appSettings.categories[key].subs || [];
+        subs.forEach(sub => {
+            const tag = document.createElement('div');
+            tag.className = 'tag-chip';
+            tag.innerHTML = `${sub} <i class="fas fa-times-circle" onclick="removeSub('${key}', '${sub}')"></i>`;
+            tagsDiv.appendChild(tag);
+        });
+    }
+
+    window.addNewSub = function() {
+        const key = document.getElementById('editorCatSelect').value;
+        const input = document.getElementById('newSubInput');
+        const newSub = input.value.trim();
+        if(!newSub) return;
+        const currentSubs = appSettings.categories[key].subs || [];
+        if(!currentSubs.includes(newSub)) {
+            const updatedSubs = [...currentSubs, newSub];
+            update(ref(db, `settings/categories/${key}`), { subs: updatedSubs });
+            input.value = "";
+            setTimeout(() => { 
+                document.getElementById('editorCatSelect').value = key; 
+                renderEditorSubs(); 
+            }, 300);
+        }
+    }
+
+    window.removeSub = function(key, subToRemove) {
+        if(!confirm(`למחוק את ${subToRemove}?`)) return;
+        const currentSubs = appSettings.categories[key].subs || [];
+        const updatedSubs = currentSubs.filter(s => s !== subToRemove);
+        update(ref(db, `settings/categories/${key}`), { subs: updatedSubs });
+        setTimeout(() => { 
+             document.getElementById('editorCatSelect').value = key;
+             renderEditorSubs(); 
+        }, 300);
+    }
+
+    window.toggleLock = function() {
+        const newLock = !appSettings.locked;
+        update(ref(db, 'settings'), { locked: newLock });
+        alert(newLock ? "רשימה ננעלה" : "רשימה נפתחה");
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    window.hardResetCategories = function() {
+        if(!confirm("פעולה זו תמחק קטגוריות ישנות/כפולות ותשאיר רק את 5 הקטגוריות הראשיות. להמשיך?")) return;
+        set(ref(db, 'settings/categories'), defaultCats)
+        .then(() => {
+            alert("הקטגוריות אופסו בהצלחה!");
+            document.getElementById('settingsModal').style.display = 'none';
+        })
+        .catch(err => alert("שגיאה באיפוס: " + err));
+    }
+
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+</script>
+
+</body>
+</html>
