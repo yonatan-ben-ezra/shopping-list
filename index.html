@@ -34,14 +34,13 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            /* מונע גלילה קפיצית באייפון */
             overscroll-behavior-y: none;
         }
 
         /* --- מסך בית --- */
         #homeView {
             padding: 20px;
-            padding-top: 40px; /* רווח לסטטוס בר */
+            padding-top: 40px;
             overflow-y: auto;
             flex-grow: 1;
             display: flex;
@@ -102,7 +101,7 @@
             flex-direction: column;
             height: 100%;
             background: #fff;
-            position: fixed; /* חשוב לאפליקציה */
+            position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             z-index: 50;
         }
@@ -114,7 +113,7 @@
             z-index: 10;
             border-bottom: 1px solid #eee;
             position: relative;
-            padding-top: env(safe-area-inset-top); /* התאמה למגרעת באייפון */
+            padding-top: env(safe-area-inset-top);
         }
 
         .view-header {
@@ -128,7 +127,6 @@
         .back-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
         .view-title { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
 
-        /* מיכל לטופס כדי שנוכל להסתיר אותו */
         #formContainer {
             transition: max-height 0.3s ease, opacity 0.3s ease;
             max-height: 300px;
@@ -171,23 +169,14 @@
         select { width: 100%; }
         
         #itemQty { 
-            width: 50px; 
-            text-align: center; 
-            background: #fff; 
-            cursor: pointer;
-            font-weight: bold;
-            color: var(--primary);
+            width: 50px; text-align: center; background: #fff; cursor: pointer; font-weight: bold; color: var(--primary);
         }
 
         #itemName { flex-grow: 1; }
         
         .note-btn {
-            background: #f0f2f5;
-            border: 1px solid #ddd;
-            width: 45px; height: 45px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: #888;
+            background: #f0f2f5; border: 1px solid #ddd; width: 45px; height: 45px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: #888;
         }
         .note-btn.active { background: #e3f2fd; color: var(--primary); border-color: var(--primary); }
         
@@ -197,37 +186,36 @@
         }
 
         #qtyToolbar {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 8px;
-            display: none;
-            white-space: nowrap;
-            overflow-x: auto;
-            max-width: 280px; 
-            z-index: 20;
+            position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-radius: 10px; padding: 8px; display: none; white-space: nowrap; overflow-x: auto; max-width: 280px; z-index: 20;
         }
         .qty-option {
-            display: inline-block;
-            width: 35px; height: 35px;
-            line-height: 35px;
-            text-align: center;
-            background: #f0f2f5;
-            margin: 2px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
+            display: inline-block; width: 35px; height: 35px; line-height: 35px; text-align: center; background: #f0f2f5;
+            margin: 2px; border-radius: 50%; cursor: pointer; font-weight: bold;
         }
         .qty-option:hover { background: var(--primary); color: white; }
 
         #listScrollArea { flex-grow: 1; overflow-y: auto; padding: 15px; background: #fcfcfc; padding-bottom: 80px; }
 
+        /* כותרת קבוצה - עיצוב חדש לחיץ */
         .sub-group-title {
-            font-size: 0.9rem; color: #888; margin: 25px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-weight: bold;
+            font-size: 0.95rem; 
+            color: #555; 
+            margin: 20px 0 10px; 
+            padding: 8px;
+            background: #eee;
+            border-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
         }
+        
+        .sub-group-title:hover { background: #e0e0e0; }
+        .sub-group-title i { transition: transform 0.3s; color: var(--primary); }
+        .sub-group-title.closed i { transform: rotate(180deg); } /* חץ מסתובב */
 
         .product-item {
             background: white; border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; align-items: center;
@@ -375,6 +363,7 @@
     let appSettings = {};
     let currentNote = "";
     let isFormVisible = true;
+    let collapsedState = {}; // משתנה לשמירת מצב צמצום הקבוצות
 
     const defaultCats = {
         osher_ad: { 
@@ -467,15 +456,14 @@
         }
     }
 
-    // --- טיפול בהיסטוריה וכפתור חזרה ---
     window.onpopstate = function(event) {
         if (currentViewKey) {
-            closeCategoryView(); // סוגר את הקטגוריה אם חזרנו אחורה
+            closeCategoryView();
         }
     };
 
     window.goBack = function() {
-        window.history.back(); // מדמה לחיצה על כפתור החזרה של הטלפון
+        window.history.back();
     }
 
     function closeCategoryView() {
@@ -485,7 +473,6 @@
     }
 
     window.openCategory = function(key) {
-        // דחיפת מצב להיסטוריה כדי שכפתור החזרה יעבוד
         window.history.pushState({ view: 'category' }, '');
 
         currentViewKey = key;
@@ -498,7 +485,6 @@
         const collapseBtn = document.getElementById('collapseBtn');
         const nameInput = document.getElementById('itemName');
 
-        // איפוס מצב
         isFormVisible = true;
         formContainer.classList.remove('collapsed');
         collapseBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
@@ -507,7 +493,6 @@
         currentNote = "";
         updateNoteBtnState();
 
-        // הגדרת כותרות ופלייסהולדרים
         if (key === 'tasks') {
             nameInput.placeholder = "מה המשימה?";
         } else {
@@ -555,10 +540,6 @@
         renderList();
     }
 
-    window.backToHome = function() {
-        window.history.back();
-    }
-
     window.toggleFormVisibility = function() {
         const container = document.getElementById('formContainer');
         const btn = document.getElementById('collapseBtn');
@@ -572,6 +553,12 @@
         }
     }
 
+    // פונקציית הטוגל החדשה לקבוצות
+    window.toggleGroup = function(groupName) {
+        collapsedState[groupName] = !collapsedState[groupName];
+        renderList(); // מרענן את הרשימה כדי להחיל את השינוי
+    }
+
     function renderList() {
         const container = document.getElementById('listScrollArea');
         container.innerHTML = "";
@@ -580,18 +567,13 @@
         const cats = appSettings.categories || defaultCats;
         let filteredItems = [];
 
-        // סינון חכם
         if (currentViewKey === 'all_view') {
-            // הכל חוץ ממשימות
             filteredItems = items.filter(i => i.mainCat !== 'tasks');
         } else if (currentViewKey === 'my_added') {
-            // שלי, ורק אם זה לא משימה
             filteredItems = items.filter(i => i.owner === userId && i.mainCat !== 'tasks');
         } else if (currentViewKey === 'tasks') {
-            // רק משימות
             filteredItems = items.filter(i => i.mainCat === 'tasks');
         } else {
-            // קטגוריה רגילה: שלה + גלובלי (אבל לא משימות)
             filteredItems = items.filter(i => 
                 (i.mainCat === currentViewKey || i.mainCat === 'global') && i.mainCat !== 'tasks'
             );
@@ -646,37 +628,45 @@
         sortedKeys.forEach(fullKey => {
             const displayTitle = fullKey.includes("###") ? fullKey.split("###")[1] : fullKey;
             
-            const itemsInGroup = grouped[fullKey];
+            // בדיקה אם הקבוצה סגורה
+            const isCollapsed = collapsedState[displayTitle] || false;
+            
             const headerDiv = document.createElement('div');
-            headerDiv.className = 'sub-group-title';
-            headerDiv.innerText = displayTitle;
+            headerDiv.className = `sub-group-title ${isCollapsed ? 'closed' : ''}`;
+            headerDiv.innerHTML = `<span>${displayTitle}</span> <i class="fas fa-chevron-down"></i>`;
+            headerDiv.onclick = () => toggleGroup(displayTitle);
+            
             container.appendChild(headerDiv);
 
-            itemsInGroup.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'product-item';
-                
-                const canDelete = isAdmin || item.owner === userId;
-                const deleteHtml = canDelete ? 
-                    `<button class="delete-btn" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : 
-                    `<div style="width:40px;"></div>`;
+            // אם סגור - לא מרנדרים את הפריטים
+            if (!isCollapsed) {
+                const itemsInGroup = grouped[fullKey];
+                itemsInGroup.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'product-item';
+                    
+                    const canDelete = isAdmin || item.owner === userId;
+                    const deleteHtml = canDelete ? 
+                        `<button class="delete-btn" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>` : 
+                        `<div style="width:40px;"></div>`;
 
-                const isGlobal = item.mainCat === 'global';
-                const noteHtml = item.note ? `<div class="item-note" id="note-${item.id}">${item.note}</div>` : '';
-                const globalIcon = isGlobal ? '<i class="fas fa-star global-badge"></i>' : '';
-                const noteIndicator = item.note && item.note.trim() !== "" ? 
-                    '<i class="fas fa-comment-dots note-indicator"></i>' : '';
+                    const isGlobal = item.mainCat === 'global';
+                    const noteHtml = item.note ? `<div class="item-note" id="note-${item.id}">${item.note}</div>` : '';
+                    const globalIcon = isGlobal ? '<i class="fas fa-star global-badge"></i>' : '';
+                    const noteIndicator = item.note && item.note.trim() !== "" ? 
+                        '<i class="fas fa-comment-dots note-indicator"></i>' : '';
 
-                div.innerHTML = `
-                    <div class="qty-circle">${item.qty}</div>
-                    <div class="item-content" onclick="toggleNote('${item.id}')">
-                        <div class="item-name">${globalIcon}${noteIndicator}${item.name}</div>
-                        ${noteHtml}
-                    </div>
-                    ${deleteHtml}
-                `;
-                container.appendChild(div);
-            });
+                    div.innerHTML = `
+                        <div class="qty-circle">${item.qty}</div>
+                        <div class="item-content" onclick="toggleNote('${item.id}')">
+                            <div class="item-name">${globalIcon}${noteIndicator}${item.name}</div>
+                            ${noteHtml}
+                        </div>
+                        ${deleteHtml}
+                    `;
+                    container.appendChild(div);
+                });
+            }
         });
     }
 
