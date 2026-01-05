@@ -2,7 +2,12 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4a90e2">
+    
     <title>רשימת הקניות שלי</title>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,11 +34,14 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            /* מונע גלילה קפיצית באייפון */
+            overscroll-behavior-y: none;
         }
 
         /* --- מסך בית --- */
         #homeView {
             padding: 20px;
+            padding-top: 40px; /* רווח לסטטוס בר */
             overflow-y: auto;
             flex-grow: 1;
             display: flex;
@@ -51,6 +59,7 @@
             max-width: 600px;
             margin: 0 auto;
             width: 100%;
+            padding-bottom: 50px;
         }
 
         .cat-card {
@@ -93,16 +102,19 @@
             flex-direction: column;
             height: 100%;
             background: #fff;
+            position: fixed; /* חשוב לאפליקציה */
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 50;
         }
 
         .sticky-section {
             background: var(--glass);
-            padding: 10px 15px 5px; /* צמצמתי קצת רווחים */
+            padding: 10px 15px 5px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             z-index: 10;
             border-bottom: 1px solid #eee;
             position: relative;
-            transition: all 0.3s ease;
+            padding-top: env(safe-area-inset-top); /* התאמה למגרעת באייפון */
         }
 
         .view-header {
@@ -110,6 +122,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            margin-top: 10px;
         }
 
         .back-btn { background: #eee; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
@@ -118,7 +131,7 @@
         /* מיכל לטופס כדי שנוכל להסתיר אותו */
         #formContainer {
             transition: max-height 0.3s ease, opacity 0.3s ease;
-            max-height: 300px; /* גובה מקסימלי משוער */
+            max-height: 300px;
             opacity: 1;
             overflow: visible;
         }
@@ -130,7 +143,6 @@
             margin: 0;
         }
 
-        /* כפתור הצמצום */
         .collapse-btn {
             width: 100%;
             text-align: center;
@@ -195,7 +207,7 @@
             display: none;
             white-space: nowrap;
             overflow-x: auto;
-            max-width: 280px; /* רוחב מוגבל לגלילה */
+            max-width: 280px; 
             z-index: 20;
         }
         .qty-option {
@@ -211,7 +223,7 @@
         }
         .qty-option:hover { background: var(--primary); color: white; }
 
-        #listScrollArea { flex-grow: 1; overflow-y: auto; padding: 15px; background: #fcfcfc; padding-bottom: 50px; }
+        #listScrollArea { flex-grow: 1; overflow-y: auto; padding: 15px; background: #fcfcfc; padding-bottom: 80px; }
 
         .sub-group-title {
             font-size: 0.9rem; color: #888; margin: 25px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-weight: bold;
@@ -233,7 +245,7 @@
         .item-note { font-size: 0.85rem; color: #666; background: #f0f0f0; padding: 5px 10px; border-radius: 6px; margin-top: 5px; display: none; }
         
         .global-badge { color: gold; font-size: 0.8rem; margin-right: 5px; }
-        .note-indicator { color: #888; font-size: 0.9rem; margin-right: 5px; } /* סימון הערה */
+        .note-indicator { color: #888; font-size: 0.9rem; margin-right: 5px; }
 
         .delete-btn {
             background: #ffecec; color: var(--danger); border: none; width: 30px; height: 30px; border-radius: 8px;
@@ -269,7 +281,7 @@
 <div id="categoryView">
     <div class="sticky-section">
         <div class="view-header">
-            <button class="back-btn" onclick="backToHome()"><i class="fas fa-arrow-right"></i> חזרה</button>
+            <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-right"></i> חזרה</button>
             <div class="view-title" id="viewTitle">שם הקטגוריה</div>
             <div style="width: 60px;"></div>
         </div>
@@ -362,7 +374,7 @@
     let allData = {};
     let appSettings = {};
     let currentNote = "";
-    let isFormVisible = true; // מעקב אחרי מצב הטופס
+    let isFormVisible = true;
 
     const defaultCats = {
         osher_ad: { 
@@ -455,7 +467,27 @@
         }
     }
 
+    // --- טיפול בהיסטוריה וכפתור חזרה ---
+    window.onpopstate = function(event) {
+        if (currentViewKey) {
+            closeCategoryView(); // סוגר את הקטגוריה אם חזרנו אחורה
+        }
+    };
+
+    window.goBack = function() {
+        window.history.back(); // מדמה לחיצה על כפתור החזרה של הטלפון
+    }
+
+    function closeCategoryView() {
+        currentViewKey = null;
+        document.getElementById('categoryView').style.display = 'none';
+        document.getElementById('homeView').style.display = 'flex';
+    }
+
     window.openCategory = function(key) {
+        // דחיפת מצב להיסטוריה כדי שכפתור החזרה יעבוד
+        window.history.pushState({ view: 'category' }, '');
+
         currentViewKey = key;
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('categoryView').style.display = 'flex';
@@ -464,17 +496,23 @@
         subSelect.innerHTML = "";
         const formContainer = document.getElementById('formContainer');
         const collapseBtn = document.getElementById('collapseBtn');
-        
-        // איפוס מצב טופס (פתוח כברירת מחדל)
+        const nameInput = document.getElementById('itemName');
+
+        // איפוס מצב
         isFormVisible = true;
         formContainer.classList.remove('collapsed');
         collapseBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
-        
-        // איפוס שדות
         document.getElementById('itemQty').value = "1";
         document.getElementById('qtyToolbar').style.display = 'none';
         currentNote = "";
         updateNoteBtnState();
+
+        // הגדרת כותרות ופלייסהולדרים
+        if (key === 'tasks') {
+            nameInput.placeholder = "מה המשימה?";
+        } else {
+            nameInput.placeholder = "מה לקנות?";
+        }
 
         if (key === 'all_view') {
             document.getElementById('viewTitle').innerText = "כל הקטגוריות";
@@ -502,12 +540,9 @@
                         subSelect.appendChild(opt);
                     });
                 }
-            } else {
-                 document.getElementById('viewTitle').innerText = "קטגוריה לא נמצאה";
             }
         }
         
-        // טיפול בנעילה
         const locked = appSettings.locked && !isAdmin;
         if (key !== 'my_added') {
             document.getElementById('addForm').style.display = locked ? 'none' : 'flex';
@@ -520,13 +555,14 @@
         renderList();
     }
 
-    // --- לוגיקת צמצום טופס ---
+    window.backToHome = function() {
+        window.history.back();
+    }
+
     window.toggleFormVisibility = function() {
         const container = document.getElementById('formContainer');
         const btn = document.getElementById('collapseBtn');
-        
         isFormVisible = !isFormVisible;
-        
         if (isFormVisible) {
             container.classList.remove('collapsed');
             btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
@@ -534,12 +570,6 @@
             container.classList.add('collapsed');
             btn.innerHTML = '<i class="fas fa-chevron-down"></i>';
         }
-    }
-
-    window.backToHome = function() {
-        currentViewKey = null;
-        document.getElementById('categoryView').style.display = 'none';
-        document.getElementById('homeView').style.display = 'flex';
     }
 
     function renderList() {
@@ -550,15 +580,20 @@
         const cats = appSettings.categories || defaultCats;
         let filteredItems = [];
 
+        // סינון חכם
         if (currentViewKey === 'all_view') {
-            filteredItems = items;
+            // הכל חוץ ממשימות
+            filteredItems = items.filter(i => i.mainCat !== 'tasks');
         } else if (currentViewKey === 'my_added') {
-            filteredItems = items.filter(i => i.owner === userId);
+            // שלי, ורק אם זה לא משימה
+            filteredItems = items.filter(i => i.owner === userId && i.mainCat !== 'tasks');
         } else if (currentViewKey === 'tasks') {
+            // רק משימות
             filteredItems = items.filter(i => i.mainCat === 'tasks');
         } else {
+            // קטגוריה רגילה: שלה + גלובלי (אבל לא משימות)
             filteredItems = items.filter(i => 
-                i.mainCat === currentViewKey || i.mainCat === 'global'
+                (i.mainCat === currentViewKey || i.mainCat === 'global') && i.mainCat !== 'tasks'
             );
         }
 
@@ -602,7 +637,6 @@
             }
 
             groupKey = prefix + "###" + title;
-
             if (!grouped[groupKey]) grouped[groupKey] = [];
             grouped[groupKey].push(item);
         });
@@ -630,8 +664,6 @@
                 const isGlobal = item.mainCat === 'global';
                 const noteHtml = item.note ? `<div class="item-note" id="note-${item.id}">${item.note}</div>` : '';
                 const globalIcon = isGlobal ? '<i class="fas fa-star global-badge"></i>' : '';
-                
-                // סימן שיש הערה
                 const noteIndicator = item.note && item.note.trim() !== "" ? 
                     '<i class="fas fa-comment-dots note-indicator"></i>' : '';
 
@@ -648,14 +680,12 @@
         });
     }
 
-    // --- לוגיקת סרגל כמות ---
     window.toggleQtyBar = function() {
         const bar = document.getElementById('qtyToolbar');
         if (bar.style.display === 'block') {
             bar.style.display = 'none';
         } else {
             bar.innerHTML = '';
-            // כמות עד 20
             for(let i=1; i<=20; i++) {
                 const numDiv = document.createElement('div');
                 numDiv.className = 'qty-option';
@@ -747,14 +777,12 @@
         const modal = document.getElementById('settingsModal');
         const select = document.getElementById('editorCatSelect');
         select.innerHTML = '<option value="">בחר...</option>';
-        
         Object.entries(appSettings.categories).forEach(([key, val]) => {
             const op = document.createElement('option');
             op.value = key;
             op.innerText = val.label;
             select.appendChild(op);
         });
-
         document.getElementById('subsEditorArea').style.display = 'none';
         modal.style.display = 'flex';
     }
@@ -763,12 +791,9 @@
         const key = document.getElementById('editorCatSelect').value;
         const area = document.getElementById('subsEditorArea');
         const tagsDiv = document.getElementById('editorTags');
-        
         if(!key) { area.style.display = 'none'; return; }
-        
         area.style.display = 'block';
         tagsDiv.innerHTML = "";
-        
         const subs = appSettings.categories[key].subs || [];
         subs.forEach(sub => {
             const tag = document.createElement('div');
