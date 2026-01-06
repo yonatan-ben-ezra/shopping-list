@@ -21,6 +21,8 @@
             --glass: rgba(255, 255, 255, 0.98);
             --shadow: 0 4px 15px rgba(0,0,0,0.08);
             --danger: #ff6b6b;
+            --success: #2ecc71; /* ירוק להצלחה */
+            --success-bg: #d4edda;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -197,12 +199,12 @@
 
         #listScrollArea { flex-grow: 1; overflow-y: auto; padding: 15px; background: #fcfcfc; padding-bottom: 80px; }
 
-        /* כותרת קבוצה - עיצוב חדש לחיץ */
+        /* כותרת קבוצה */
         .sub-group-title {
             font-size: 0.95rem; 
             color: #555; 
             margin: 20px 0 10px; 
-            padding: 8px;
+            padding: 10px;
             background: #eee;
             border-radius: 8px;
             font-weight: bold;
@@ -211,25 +213,55 @@
             align-items: center;
             cursor: pointer;
             user-select: none;
+            transition: all 0.3s;
         }
         
         .sub-group-title:hover { background: #e0e0e0; }
         .sub-group-title i { transition: transform 0.3s; color: var(--primary); }
-        .sub-group-title.closed i { transform: rotate(180deg); } /* חץ מסתובב */
+        .sub-group-title.closed i { transform: rotate(180deg); }
+        
+        /* כותרת שהושלמה */
+        .sub-group-title.completed {
+            background-color: var(--success-bg);
+            color: #155724;
+            border-right: 5px solid var(--success);
+        }
+        .sub-group-title.completed i { color: var(--success); }
 
         .product-item {
             background: white; border-radius: 12px; padding: 10px; margin-bottom: 10px; display: flex; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); transition: all 0.3s ease;
+        }
+
+        /* מוצר שנקנה */
+        .product-item.is-purchased {
+            opacity: 0.7;
+            background-color: #f6fff8; /* ירוק בהיר מאוד */
+            box-shadow: none;
+        }
+        .product-item.is-purchased .item-name {
+            text-decoration: line-through;
+            color: #888;
         }
 
         .qty-circle {
             width: 35px; height: 35px; background: var(--primary); color: white; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-weight: bold; 
             margin-left: 10px; flex-shrink: 0; font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        /* עיגול ירוק למוצר שנקנה */
+        .qty-circle.purchased {
+            background-color: var(--success);
+            transform: scale(1.1);
         }
 
+        /* אפקט לחיצה למנהל */
+        .qty-circle.clickable:active { transform: scale(0.9); }
+
         .item-content { flex-grow: 1; cursor: pointer; }
-        .item-name { font-weight: 600; font-size: 1.1rem; }
+        .item-name { font-weight: 600; font-size: 1.1rem; transition: color 0.3s; }
         .item-note { font-size: 0.85rem; color: #666; background: #f0f0f0; padding: 5px 10px; border-radius: 6px; margin-top: 5px; display: none; }
         
         .global-badge { color: gold; font-size: 0.8rem; margin-right: 5px; }
@@ -363,7 +395,7 @@
     let appSettings = {};
     let currentNote = "";
     let isFormVisible = true;
-    let collapsedState = {}; // משתנה לשמירת מצב צמצום הקבוצות
+    let collapsedState = {}; 
 
     const defaultCats = {
         osher_ad: { 
@@ -553,10 +585,16 @@
         }
     }
 
-    // פונקציית הטוגל החדשה לקבוצות
     window.toggleGroup = function(groupName) {
         collapsedState[groupName] = !collapsedState[groupName];
-        renderList(); // מרענן את הרשימה כדי להחיל את השינוי
+        renderList();
+    }
+
+    // פונקציית סימון קניה למנהל
+    window.togglePurchased = function(id, currentStatus) {
+        if (!isAdmin) return;
+        const newStatus = !currentStatus;
+        update(ref(db, `shoppingList/${id}`), { purchased: newStatus });
     }
 
     function renderList() {
@@ -628,22 +666,36 @@
         sortedKeys.forEach(fullKey => {
             const displayTitle = fullKey.includes("###") ? fullKey.split("###")[1] : fullKey;
             
-            // בדיקה אם הקבוצה סגורה
+            const itemsInGroup = grouped[fullKey];
+            
+            // מיון פנימי: קודם לא נקנו, אחר כך נקנו
+            itemsInGroup.sort((a, b) => {
+                const pA = a.purchased ? 1 : 0;
+                const pB = b.purchased ? 1 : 0;
+                return pA - pB;
+            });
+
+            // בדיקה אם הכל נקנה בקבוצה הזו (רק אם יש פריטים)
+            const allPurchased = itemsInGroup.length > 0 && itemsInGroup.every(i => i.purchased);
+            
             const isCollapsed = collapsedState[displayTitle] || false;
             
             const headerDiv = document.createElement('div');
-            headerDiv.className = `sub-group-title ${isCollapsed ? 'closed' : ''}`;
-            headerDiv.innerHTML = `<span>${displayTitle}</span> <i class="fas fa-chevron-down"></i>`;
+            headerDiv.className = `sub-group-title ${isCollapsed ? 'closed' : ''} ${allPurchased ? 'completed' : ''}`;
+            
+            // תוספת V לכותרת אם הושלמה
+            const checkIcon = allPurchased ? '<i class="fas fa-check-circle" style="margin-left:5px;"></i>' : '';
+            
+            headerDiv.innerHTML = `<span>${checkIcon}${displayTitle}</span> <i class="fas fa-chevron-down"></i>`;
             headerDiv.onclick = () => toggleGroup(displayTitle);
             
             container.appendChild(headerDiv);
 
-            // אם סגור - לא מרנדרים את הפריטים
             if (!isCollapsed) {
-                const itemsInGroup = grouped[fullKey];
                 itemsInGroup.forEach(item => {
                     const div = document.createElement('div');
-                    div.className = 'product-item';
+                    const isPurchased = item.purchased ? 'is-purchased' : '';
+                    div.className = `product-item ${isPurchased}`;
                     
                     const canDelete = isAdmin || item.owner === userId;
                     const deleteHtml = canDelete ? 
@@ -656,8 +708,13 @@
                     const noteIndicator = item.note && item.note.trim() !== "" ? 
                         '<i class="fas fa-comment-dots note-indicator"></i>' : '';
 
+                    // הגדרות עיגול כמות
+                    const purchasedClass = item.purchased ? 'purchased' : '';
+                    const clickableClass = isAdmin ? 'clickable' : '';
+                    const purchaseAction = isAdmin ? `onclick="togglePurchased('${item.id}', ${item.purchased || false})"` : '';
+
                     div.innerHTML = `
-                        <div class="qty-circle">${item.qty}</div>
+                        <div class="qty-circle ${purchasedClass} ${clickableClass}" ${purchaseAction}>${item.qty}</div>
                         <div class="item-content" onclick="toggleNote('${item.id}')">
                             <div class="item-name">${globalIcon}${noteIndicator}${item.name}</div>
                             ${noteHtml}
@@ -723,7 +780,8 @@
             subCat: sub, 
             note: currentNote,
             owner: userId,
-            created: Date.now()
+            created: Date.now(),
+            purchased: false 
         });
 
         document.getElementById('itemName').value = "";
